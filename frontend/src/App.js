@@ -11,6 +11,7 @@ import Signup from './pages/Signup';
 import UserPanel from './components/UserPanel';
 import NavigationBar from './components/NavigationBar';
 import SentimentAnalysis from './components/SentimentAnalysis';
+import MarketNewsIntelligence from './components/MarketNewsIntelligence';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -157,10 +158,7 @@ function Dashboard() {
 
         {activeTab === 'news' && (
           <div className="news-layout">
-            <div className="news-content">
-              <h2>Market News</h2>
-              <p>News feed coming soon...</p>
-            </div>
+            <MarketNewsIntelligence symbol={selectedStock?.symbol || ''} />
           </div>
         )}
 

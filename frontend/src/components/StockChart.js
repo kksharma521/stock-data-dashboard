@@ -1,204 +1,144 @@
-import React, { useState } from 'react';
-import {
-  LineChartComponent,
-  AreaChartComponent,
-  BarChartComponent,
-  CandlestickChart,
-  ReturnChartComponent,
-} from './AdvancedChart';
-import {
-  ApexCandlestickChart,
-  ApexRangeAreaChart,
-  ApexVolatilityHeatmap,
-  ApexWaterfallChart,
-  ApexScatterChart,
-  ApexRadialChart,
-} from './AdvancedChartsEnhanced';
-import {
-  RadarChartComponent,
-  BubbleChartComponent,
-  ComboChartComponent,
-  PriceDistributionChart,
-} from './ChartJSEnhanced';
+import React, { useMemo, useState } from 'react';
+import Chart from 'react-apexcharts';
 import './StockChart.css';
 
 function StockChart({ data, symbol, analysis }) {
-  const [chartType, setChartType] = useState('candlestick-apex');
+  const [viewMode, setViewMode] = useState('price');
+  const [timeRange, setTimeRange] = useState(30);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  if (!data || data.length === 0) {
-    return <div className="stock-chart empty">No chart data available</div>;
+  const rangeData = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    return data.slice(-timeRange);
+  }, [data, timeRange]);
+
+  const mapped = useMemo(() => {
+    return rangeData.map((row) => ({
+      x: new Date(row.date).getTime(),
+      close: Number(row.close ?? 0),
+      ma7: Number(row.ma_7 ?? row.close ?? 0),
+      ret: Number(row.daily_return_pct ?? 0),
+    }));
+  }, [rangeData]);
+
+  const series = useMemo(() => {
+    if (viewMode === 'price') {
+      return [{ name: `${symbol} Price`, data: mapped.map((p) => [p.x, p.close]) }];
+    }
+
+    if (viewMode === 'ma') {
+      return [
+        { name: `${symbol} Close`, data: mapped.map((p) => [p.x, p.close]) },
+        { name: '7 Day Moving Average', data: mapped.map((p) => [p.x, p.ma7]) },
+      ];
+    }
+
+    const firstClose = mapped[0]?.close || 1;
+    return [
+      {
+        name: `${symbol} Normalized Price`,
+        data: mapped.map((p) => [p.x, ((p.close / firstClose) - 1) * 100]),
+      },
+      { name: 'Daily Return %', data: mapped.map((p) => [p.x, p.ret]) },
+    ];
+  }, [mapped, symbol, viewMode]);
+
+  const yAxisTitle = viewMode === 'compare' ? 'Percent (%)' : 'Price (USD)';
+
+  const chartOptions = useMemo(() => ({
+    chart: {
+      type: 'line',
+      height: isExpanded ? 540 : 360,
+      zoom: { enabled: true, type: 'x', autoScaleYaxis: true },
+      toolbar: { show: true, tools: { download: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
+      animations: { easing: 'easeinout', speed: 300 },
+      background: '#ffffff',
+    },
+    stroke: { curve: 'smooth', width: viewMode === 'ma' ? [2.5, 2.5] : 2.5 },
+    colors: viewMode === 'compare' ? ['#1d4ed8', '#f59e0b'] : ['#1d4ed8', '#10b981'],
+    xaxis: {
+      type: 'datetime',
+      title: { text: 'Date' },
+      labels: { datetimeUTC: false },
+    },
+    yaxis: {
+      title: { text: yAxisTitle },
+      labels: { formatter: (val) => (viewMode === 'compare' ? `${val.toFixed(2)}%` : `$${val.toFixed(2)}`) },
+    },
+    legend: { show: true, position: 'top', horizontalAlign: 'left' },
+    tooltip: {
+      shared: true,
+      x: { format: 'dd MMM yyyy' },
+      y: {
+        formatter: (val) => (viewMode === 'compare' ? `${Number(val).toFixed(2)}%` : `$${Number(val).toFixed(2)}`),
+      },
+    },
+    grid: { borderColor: '#e5e7eb' },
+    dataLabels: { enabled: false },
+  }), [isExpanded, viewMode, yAxisTitle]);
+
+  if (!rangeData.length) {
+    return <div className="stock-chart empty">No chart data available.</div>;
   }
 
-  const renderChart = () => {
-    switch (chartType) {
-      // ApexCharts
-      case 'candlestick-apex':
-        return <ApexCandlestickChart data={data} />;
-      case 'range-area':
-        return <ApexRangeAreaChart data={data} />;
-      case 'volatility-heatmap':
-        return <ApexVolatilityHeatmap data={data} />;
-      case 'price-waterfall':
-        return <ApexWaterfallChart data={data} />;
-      case 'scatter':
-        return <ApexScatterChart data={data} />;
-      case 'risk-radial':
-        return <ApexRadialChart analysis={analysis} />;
-      // Recharts
-      case 'candlestick':
-        return <CandlestickChart data={data} />;
-      case 'line':
-        return <LineChartComponent data={data} />;
-      case 'area':
-        return <AreaChartComponent data={data} />;
-      case 'bar':
-        return <BarChartComponent data={data} />;
-      case 'returns':
-        return <ReturnChartComponent data={data} />;
-      // Chart.js
-      case 'radar':
-        return <RadarChartComponent analysis={analysis} />;
-      case 'bubble':
-        return <BubbleChartComponent data={data} />;
-      case 'combo':
-        return <ComboChartComponent data={data} />;
-      case 'distribution':
-        return <PriceDistributionChart data={data} />;
-      default:
-        return <ApexCandlestickChart data={data} />;
-    }
-  };
+  const chartBody = (
+    <>
+      <div className="chart-toolbar">
+        <div className="chart-view-switch">
+          <button className={viewMode === 'price' ? 'active' : ''} onClick={() => setViewMode('price')}>Price</button>
+          <button className={viewMode === 'ma' ? 'active' : ''} onClick={() => setViewMode('ma')}>Price + MA(7)</button>
+          <button className={viewMode === 'compare' ? 'active' : ''} onClick={() => setViewMode('compare')}>Comparison</button>
+        </div>
+        <div className="chart-range-switch">
+          {[7, 30, 90].map((range) => (
+            <button key={range} className={timeRange === range ? 'active' : ''} onClick={() => setTimeRange(range)}>
+              {range}d
+            </button>
+          ))}
+          <button className="expand-btn" onClick={() => setIsExpanded(true)}>Expand View</button>
+        </div>
+      </div>
 
-  const getChartStats = () => {
-    const prices = data.map((d) => d.close);
-    const returns = data.map((d) => d.daily_return_pct || 0);
+      <div className="chart-container-professional">
+        <Chart options={chartOptions} series={series} type="line" height={isExpanded ? 540 : 360} />
+      </div>
 
-    const highPrice = Math.max(...prices);
-    const lowPrice = Math.min(...prices);
-    const avgReturn = (returns.reduce((a, b) => a + b, 0) / returns.length).toFixed(2);
-    const maxReturn = Math.max(...returns).toFixed(2);
-
-    return {
-      highPrice: highPrice.toFixed(2),
-      lowPrice: lowPrice.toFixed(2),
-      avgReturn,
-      maxReturn,
-    };
-  };
-
-  const stats = getChartStats();
-
-  const chartGroups = {
-    'ApexCharts (Professional)': [
-      { id: 'candlestick-apex', label: '🕯️ Candlestick Pro', icon: '📊' },
-      { id: 'range-area', label: '📈 Range Area', icon: '📊' },
-      { id: 'volatility-heatmap', label: '🔥 Volatility Map', icon: '🌡️' },
-      { id: 'price-waterfall', label: '💧 Price Flow', icon: '💧' },
-      { id: 'scatter', label: '🎯 Scatter', icon: '🎯' },
-      { id: 'risk-radial', label: '🎨 Risk Radial', icon: '🎨' },
-    ],
-    'Recharts (Classic)': [
-      { id: 'candlestick', label: '🕯️ Candlestick', icon: '📊' },
-      { id: 'line', label: '📈 Line', icon: '📈' },
-      { id: 'area', label: '📉 Area', icon: '📉' },
-      { id: 'bar', label: '📏 Bar', icon: '📏' },
-      { id: 'returns', label: '📊 Returns', icon: '📊' },
-    ],
-    'Chart.js (Advanced)': [
-      { id: 'radar', label: '🎯 Radar', icon: '🎯' },
-      { id: 'bubble', label: '🫧 Bubble', icon: '🫧' },
-      { id: 'combo', label: '🔀 Combo', icon: '🔀' },
-      { id: 'distribution', label: '📊 Distribution', icon: '📊' },
-    ],
-  };
+      <div className="chart-insight-row">
+        <div>
+          <span className="label">Trend</span>
+          <strong>{analysis?.trend || 'N/A'}</strong>
+        </div>
+        <div>
+          <span className="label">Volatility</span>
+          <strong>{analysis?.volatility_pct?.toFixed?.(2) ?? analysis?.volatility_pct ?? 0}%</strong>
+        </div>
+        <div>
+          <span className="label">Risk</span>
+          <strong>{analysis?.risk_level || 'N/A'}</strong>
+        </div>
+      </div>
+    </>
+  );
 
   return (
-    <div className="stock-chart">
+    <section className="stock-chart">
       <div className="chart-header">
-        <h3>Price Analysis & Technical Charts - {symbol}</h3>
+        <h3>{symbol} Market Chart</h3>
       </div>
+      {chartBody}
 
-      <div className="chart-selector-section">
-        {Object.entries(chartGroups).map(([group, charts]) => (
-          <div key={group} className="chart-group">
-            <div className="group-label">{group}</div>
-            <div className="chart-buttons">
-              {charts.map((chart) => (
-                <button
-                  key={chart.id}
-                  className={`chart-button ${chartType === chart.id ? 'active' : ''}`}
-                  onClick={() => setChartType(chart.id)}
-                  title={chart.label}
-                >
-                  {chart.label}
-                </button>
-              ))}
+      {isExpanded && (
+        <div className="chart-modal-overlay" onClick={() => setIsExpanded(false)}>
+          <div className="chart-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="chart-modal-header">
+              <h4>{symbol} Expanded Analysis</h4>
+              <button onClick={() => setIsExpanded(false)}>Close</button>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="chart-container">{renderChart()}</div>
-
-      <div className="chart-stats">
-        <div className="stat-card">
-          <div className="stat-label">Highest Price</div>
-          <div className="stat-value">${stats.highPrice}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Lowest Price</div>
-          <div className="stat-value">${stats.lowPrice}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Avg Daily Return</div>
-          <div className={`stat-value ${parseFloat(stats.avgReturn) >= 0 ? 'positive' : 'negative'}`}>
-            {stats.avgReturn}%
+            {chartBody}
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Max Daily Return</div>
-          <div className={`stat-value ${parseFloat(stats.maxReturn) >= 0 ? 'positive' : 'negative'}`}>
-            {stats.maxReturn}%
-          </div>
-        </div>
-      </div>
-
-      {/* Data table */}
-      <div className="chart-table">
-        <h4>Recent Price Data</h4>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Open</th>
-              <th>Close</th>
-              <th>High</th>
-              <th>Low</th>
-              <th>MA-7</th>
-              <th>Daily Return %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data
-              .slice(-10)
-              .reverse()
-              .map((row, i) => (
-                <tr key={i}>
-                  <td>{new Date(row.date).toLocaleDateString()}</td>
-                  <td>${row.open?.toFixed(2) || 'N/A'}</td>
-                  <td>${row.close.toFixed(2)}</td>
-                  <td>${row.high?.toFixed(2) || 'N/A'}</td>
-                  <td>${row.low?.toFixed(2) || 'N/A'}</td>
-                  <td>{row.ma_7 ? `$${row.ma_7.toFixed(2)}` : 'N/A'}</td>
-                  <td className={row.daily_return_pct >= 0 ? 'positive' : 'negative'}>
-                    {row.daily_return_pct}%
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      )}
+    </section>
   );
 }
 

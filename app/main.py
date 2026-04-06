@@ -5,7 +5,21 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr
 import os
 import requests
-from services import fetch_stock_data, compute_analysis, get_companies, is_market_open, get_stock_news, get_stock_alerts, get_top_earners, get_top_long_term, get_top_daily_stocks
+import pandas as pd
+from services import (
+    fetch_stock_data,
+    compute_analysis,
+    get_companies,
+    is_market_open,
+    get_stock_news,
+    get_stock_alerts,
+    get_top_earners,
+    get_top_losers,
+    get_top_long_term,
+    get_top_daily_stocks,
+    build_news_intelligence,
+    get_market_news_intelligence,
+)
 from database import SessionLocal, get_db, User, UserStock
 from auth import (
     get_password_hash, verify_password, create_access_token, create_refresh_token,
@@ -544,16 +558,24 @@ def get_stock(symbol: str, period: int = 30):
 def summary(symbol: str):
     try:
         df = fetch_stock_data(symbol)
+        df["daily_return_pct"] = ((df["close"] - df["close"].shift(1)) / df["close"].shift(1)) * 100
+        df["ma_7"] = df["close"].rolling(window=7).mean()
+        analysis = compute_analysis(df)
 
         high_52 = df["close"].max()
         low_52 = df["close"].min()
         avg_close = df["close"].mean()
+        latest_return = df["daily_return_pct"].iloc[-1]
+        latest_ma7 = df["ma_7"].iloc[-1]
 
         return {
             "symbol": symbol.upper(),
             "52_week_high": round(float(high_52), 2),
             "52_week_low": round(float(low_52), 2),
-            "average_close": round(float(avg_close), 2)
+            "average_close": round(float(avg_close), 2),
+            "latest_daily_return_pct": round(float(latest_return), 2),
+            "latest_ma_7": round(float(latest_ma7), 2) if pd.notna(latest_ma7) else None,
+            "volatility_score": analysis.get("volatility_score", 0),
         }
 
     except ValueError as e:
@@ -570,11 +592,23 @@ def market_status():
 @app.get("/news/{symbol}")
 def stock_news(symbol: str):
     try:
-        news = get_stock_news(symbol.upper())
+        news = build_news_intelligence(symbol.upper())
         return {
             "symbol": symbol.upper(),
             "news": news
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/news/intelligence")
+def market_news_intelligence(
+    symbol: Optional[str] = Query(default=None),
+    sentiment: Optional[str] = Query(default=None),
+    limit: int = Query(default=30, ge=1, le=100),
+):
+    try:
+        return get_market_news_intelligence(symbol=symbol, sentiment=sentiment, limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -608,6 +642,19 @@ def top_earners():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch top earners: {str(e)}")
+
+
+@app.get("/top/losers")
+def top_losers():
+    try:
+        losers = get_top_losers()
+        return {
+            "top_losers": losers,
+            "count": len(losers),
+            "description": "Top 10 stocks with largest percentage declines today",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch top losers: {str(e)}")
 
 
 # ✅ Top 10 long-term investment stocks endpoint
@@ -675,9 +722,9 @@ def top_daily_stocks():
 #     """Initialize the sentiment analysis model on application startup"""
 #     try:
 #         initialize_sentiment_model()
-        print("✅ Sentiment analysis model initialized successfully")
-    except Exception as e:
-        print(f"❌ Failed to initialize sentiment model: {e}")
+#         print("Sentiment analysis model initialized successfully")
+#     except Exception as e:
+#         print(f"Failed to initialize sentiment model: {e}")
 
 
 if __name__ == "__main__":

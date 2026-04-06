@@ -1,0 +1,26 @@
+.smart-insights {
+  border: 1px solid #dde6f2;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.smart-insights h3 {
+  margin: 0 0 10px;
+  color: #122843;
+  font-size: 1.02rem;
+}
+
+.smart-insights ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.smart-insights li {
+  color: #324863;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}

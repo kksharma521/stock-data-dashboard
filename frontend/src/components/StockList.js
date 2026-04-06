@@ -69,7 +69,7 @@ function StockList({ onSelectStock, selectedSymbol }) {
 
   return (
     <div className="stock-list">
-      <h2>📊 Available Stocks</h2>
+      <h2>Available Stocks</h2>
       
       <div className="search-container">
         <div className="search-input-wrapper">

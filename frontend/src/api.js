@@ -1,4 +1,6 @@
 const API_BASE = 'http://localhost:8000';
+const intelligenceCache = new Map();
+const INTEL_CACHE_TTL_MS = 60 * 1000;
 
 // Helper for fetch with timeout to prevent long waits
 const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
@@ -154,6 +156,59 @@ export const stockAPI = {
     }
   },
 
+  getMarketNewsIntelligence: async ({ symbol = '', sentiment = '', limit = 30 } = {}) => {
+    const key = JSON.stringify({ symbol, sentiment, limit });
+    const cached = intelligenceCache.get(key);
+    const now = Date.now();
+    if (cached && now - cached.ts < INTEL_CACHE_TTL_MS) {
+      return cached.data;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (symbol) params.set('symbol', symbol);
+      if (sentiment) params.set('sentiment', sentiment);
+      params.set('limit', String(limit));
+      const response = await fetchWithTimeout(`${API_BASE}/news/intelligence?${params.toString()}`, {}, 10000);
+      if (!response.ok) throw new Error('Failed to fetch market intelligence');
+      const data = await response.json();
+      intelligenceCache.set(key, { ts: now, data });
+      return data;
+    } catch (error) {
+      console.error('Error fetching market intelligence:', error);
+      const fallback = {
+        summary: {
+          label: 'neutral',
+          positive_pct: 50,
+          message: "Today's market sentiment is Neutral (50% positive).",
+        },
+        trending_stocks: [
+          { symbol: 'AAPL', news_count: 4 },
+          { symbol: 'MSFT', news_count: 3 },
+          { symbol: 'TSLA', news_count: 3 },
+        ],
+        high_impact_news: [],
+        items: [
+          {
+            title: 'Apple maintains guidance as services growth remains steady',
+            source: 'Market Desk',
+            published_at: new Date().toISOString(),
+            url: '',
+            symbol: 'AAPL',
+            summary: 'Management reiterated guidance with resilient margins and stable demand trends.',
+            keywords: ['guidance', 'margins', 'demand'],
+            sentiment: { label: 'neutral', score: 0.1 },
+            impact: 'neutral',
+            high_impact: false,
+            confidence: 'medium',
+          },
+        ],
+      };
+      intelligenceCache.set(key, { ts: now, data: fallback });
+      return fallback;
+    }
+  },
+
   // Get stock alerts
   getStockAlerts: async (symbol) => {
     try {
@@ -196,6 +251,24 @@ export const stockAPI = {
       ];
 
       return { top_earners: fallbackEarners, count: 10, description: 'Top 10 stocks with highest percentage gains today' };
+    }
+  },
+
+  getTopLosers: async () => {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE}/top/losers`, {}, 30000);
+      if (!response.ok) throw new Error('Failed to fetch top losers');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching top losers:', error);
+      return {
+        top_losers: [
+          { symbol: 'TSLA', name: 'Tesla Inc.', market: 'US', price: 210.75, change_pct: -4.1, change: -9.02 },
+          { symbol: 'NFLX', name: 'Netflix Inc.', market: 'US', price: 560.2, change_pct: -3.3, change: -19.1 },
+          { symbol: 'INTC', name: 'Intel Corporation', market: 'US', price: 34.4, change_pct: -2.8, change: -0.99 },
+        ],
+        count: 3,
+      };
     }
   },
 
