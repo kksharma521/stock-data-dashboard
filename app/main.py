@@ -490,6 +490,10 @@ def compare_stocks(symbol1: str = Query(...), symbol2: str = Query(...)):
 
         analysis1 = compute_analysis(df1)
         analysis2 = compute_analysis(df2)
+        latest1 = float(df1["close"].iloc[-1])
+        latest2 = float(df2["close"].iloc[-1])
+        price_diff = latest1 - latest2
+        price_diff_pct = (price_diff / latest2) * 100 if latest2 else 0
 
         return1 = (df1["close"].iloc[-1] - df1["close"].iloc[0]) / df1["close"].iloc[0]
         return2 = (df2["close"].iloc[-1] - df2["close"].iloc[0]) / df2["close"].iloc[0]
@@ -519,8 +523,14 @@ def compare_stocks(symbol1: str = Query(...), symbol2: str = Query(...)):
             "symbol1": symbol1.upper(),
             "symbol2": symbol2.upper(),
             "comparison": {
+                "latest_price_symbol1": round(latest1, 2),
+                "latest_price_symbol2": round(latest2, 2),
+                "price_difference": round(price_diff, 2),
+                "price_difference_pct": round(price_diff_pct, 2),
                 "return_symbol1": float(return1_pct),
                 "return_symbol2": float(return2_pct),
+                "trend_symbol1": analysis1["trend"],
+                "trend_symbol2": analysis2["trend"],
                 "better_performer": better,
                 "more_volatile": more_volatile,
                 "insight": insight

@@ -24,3 +24,9 @@
   line-height: 1.4;
   font-size: 0.9rem;
 }
+
+.insights-empty {
+  margin: 0;
+  color: #4b607d;
+  font-size: 0.9rem;
+}

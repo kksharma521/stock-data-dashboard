@@ -1,362 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { stockAPI } from '../api';
+import MarketLoading from './MarketLoading';
 import './SentimentAnalysis.css';
 
+const COLORS = ['#16a34a', '#6b7280', '#dc2626'];
+
 const SentimentAnalysis = () => {
-  const [marketSentiment, setMarketSentiment] = useState(null);
-  const [selectedStock, setSelectedStock] = useState('');
-  const [stockSentiment, setStockSentiment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeView, setActiveView] = useState('market'); // 'market' or 'stock'
+  const [error, setError] = useState('');
+  const [marketSentiment, setMarketSentiment] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   useEffect(() => {
-    fetchMarketSentiment();
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const m = await stockAPI.getMarketSentiment();
+        setMarketSentiment(m.market_sentiment);
+      } catch (err) {
+        setError('Unable to load sentiment analytics.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
   }, []);
 
-  const fetchMarketSentiment = async () => {
-    try {
-      setLoading(true);
-      const response = await stockAPI.getMarketSentiment();
-      setMarketSentiment(response.market_sentiment);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load market sentiment data');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const distribution = useMemo(() => {
+    if (!marketSentiment?.breakdown) return [];
+    return [
+      { name: 'Positive', value: marketSentiment.breakdown.bullish_stocks || 0 },
+      { name: 'Neutral', value: marketSentiment.breakdown.neutral_stocks || 0 },
+      { name: 'Negative', value: marketSentiment.breakdown.bearish_stocks || 0 },
+    ];
+  }, [marketSentiment]);
+
+  const stockBars = useMemo(() => {
+    return (marketSentiment?.stock_sentiments || []).map((s) => ({
+      symbol: s.symbol,
+      confidence: s.confidence,
+      positive: s.sentiment_breakdown.positive,
+      neutral: s.sentiment_breakdown.neutral,
+      negative: s.sentiment_breakdown.negative,
+    }));
+  }, [marketSentiment]);
+
+  const openStockDetail = async (symbol) => {
+    const intel = await stockAPI.getMarketNewsIntelligence({ symbol, limit: 10 });
+    const sourceCounter = {};
+    (intel.items || []).forEach((n) => {
+      sourceCounter[n.source] = (sourceCounter[n.source] || 0) + 1;
+    });
+
+    const top = intel.items || [];
+    const positive = top.filter((n) => n.sentiment?.label === 'positive').length;
+    const negative = top.filter((n) => n.sentiment?.label === 'negative').length;
+    const neutral = top.length - positive - negative;
+
+    const keywordCounter = {};
+    top.forEach((n) => (n.keywords || []).forEach((k) => { keywordCounter[k] = (keywordCounter[k] || 0) + 1; }));
+
+    setDetail({
+      symbol,
+      sentimentBreakdown: { positive, neutral, negative, total: top.length || 1 },
+      sourceBreakdown: Object.entries(sourceCounter).map(([name, count]) => ({ name, count })),
+      keywords: Object.entries(keywordCounter).sort((a, b) => b[1] - a[1]).slice(0, 8),
+      news: top.slice(0, 5),
+      confidence: intel.summary?.positive_pct || 50,
+    });
   };
 
-  const fetchStockSentiment = async (symbol) => {
-    if (!symbol) return;
-
-    try {
-      setLoading(true);
-      const response = await stockAPI.getStockSentiment(symbol);
-      setStockSentiment(response.sentiment_analysis);
-      setError(null);
-    } catch (err) {
-      setError(`Failed to load sentiment data for ${symbol}`);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStockSearch = (e) => {
-    e.preventDefault();
-    if (selectedStock.trim()) {
-      fetchStockSentiment(selectedStock.trim().toUpperCase());
-      setActiveView('stock');
-    }
-  };
-
-  const getSentimentColor = (sentiment) => {
-    switch (sentiment) {
-      case 'positive':
-      case 'bullish':
-        return '#10b981';
-      case 'negative':
-      case 'bearish':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
-
-  const getSentimentIcon = (sentiment) => {
-    switch (sentiment) {
-      case 'positive':
-      case 'bullish':
-        return '📈';
-      case 'negative':
-      case 'bearish':
-        return '📉';
-      default:
-        return '➡️';
-    }
-  };
-
-  const getSentimentLabel = (sentiment) => {
-    switch (sentiment) {
-      case 'bullish':
-        return 'Bullish Market';
-      case 'bearish':
-        return 'Bearish Market';
-      case 'positive':
-        return 'Positive Sentiment';
-      case 'negative':
-        return 'Negative Sentiment';
-      default:
-        return 'Neutral Sentiment';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="sentiment-analysis loading">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Analyzing market sentiment with AI...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="sentiment-analysis error">
-        <div className="error-container">
-          <span className="error-icon">⚠️</span>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={fetchMarketSentiment} className="retry-btn">
-            Retry Analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <MarketLoading label="Running sentiment intelligence models..." />;
+  if (error) return <div className="sentiment-error">{error}</div>;
 
   return (
     <div className="sentiment-analysis">
-      <div className="sentiment-header">
-        <h2>AI-Powered Sentiment Analysis</h2>
-        <p>Real-time market sentiment using LSTM neural networks trained on news and social media data</p>
+      <header className="sent-header">
+        <h2>Sentiment Intelligence</h2>
+        <p>Data sources: Yahoo Finance, market news feeds, and in-app NLP scoring.</p>
+      </header>
 
-        <div className="view-toggle">
-          <button
-            className={`toggle-btn ${activeView === 'market' ? 'active' : ''}`}
-            onClick={() => setActiveView('market')}
-          >
-            Market Overview
-          </button>
-          <button
-            className={`toggle-btn ${activeView === 'stock' ? 'active' : ''}`}
-            onClick={() => setActiveView('stock')}
-          >
-            Stock Analysis
-          </button>
+      <div className="sent-summary-cards">
+        <div className="card"><span>Market Sentiment</span><strong>{marketSentiment?.market_sentiment || 'neutral'}</strong></div>
+        <div className="card"><span>Confidence</span><strong>{marketSentiment?.confidence || 0}%</strong></div>
+        <div className="card"><span>Stocks Analyzed</span><strong>{marketSentiment?.analyzed_stocks || 0}</strong></div>
+      </div>
+
+      <div className="sent-grid">
+        <div className="sent-panel">
+          <h3>Sentiment Distribution</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie data={distribution} dataKey="value" cx="50%" cy="50%" outerRadius={82} label>
+                {distribution.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="sent-panel">
+          <h3>Stock Confidence Scores</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={stockBars}>
+              <XAxis dataKey="symbol" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="confidence" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="stock-click-list">
+            {stockBars.map((s) => (
+              <button key={s.symbol} onClick={() => openStockDetail(s.symbol)}>{s.symbol}</button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {activeView === 'market' && marketSentiment && (
-        <div className="market-sentiment">
-          <div className="sentiment-overview">
-            <div className="sentiment-card main">
-              <div className="sentiment-icon">
-                {getSentimentIcon(marketSentiment.market_sentiment)}
-              </div>
-              <div className="sentiment-content">
-                <h3>{getSentimentLabel(marketSentiment.market_sentiment)}</h3>
-                <div className="confidence-bar">
-                  <div
-                    className="confidence-fill"
-                    style={{
-                      width: `${marketSentiment.confidence}%`,
-                      backgroundColor: getSentimentColor(marketSentiment.market_sentiment)
-                    }}
-                  ></div>
-                </div>
-                <span className="confidence-text">{marketSentiment.confidence}% Confidence</span>
-              </div>
+      {detail && (
+        <div className="stock-detail-panel">
+          <header>
+            <h3>{detail.symbol} Detailed Sentiment View</h3>
+            <button onClick={() => setDetail(null)}>Close</button>
+          </header>
+
+          <div className="detail-grid">
+            <div>
+              <h4>Sentiment Breakdown</h4>
+              <ul>
+                <li>Positive: {((detail.sentimentBreakdown.positive / detail.sentimentBreakdown.total) * 100).toFixed(1)}%</li>
+                <li>Neutral: {((detail.sentimentBreakdown.neutral / detail.sentimentBreakdown.total) * 100).toFixed(1)}%</li>
+                <li>Negative: {((detail.sentimentBreakdown.negative / detail.sentimentBreakdown.total) * 100).toFixed(1)}%</li>
+              </ul>
             </div>
 
-            <div className="sentiment-stats">
-              <div className="stat-card">
-                <span className="stat-label">Stocks Analyzed</span>
-                <span className="stat-value">{marketSentiment.analyzed_stocks}</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Bullish Stocks</span>
-                <span className="stat-value" style={{ color: '#10b981' }}>
-                  {marketSentiment.breakdown.bullish_stocks}
-                </span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Bearish Stocks</span>
-                <span className="stat-value" style={{ color: '#ef4444' }}>
-                  {marketSentiment.breakdown.bearish_stocks}
-                </span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Neutral Stocks</span>
-                <span className="stat-value" style={{ color: '#6b7280' }}>
-                  {marketSentiment.breakdown.neutral_stocks}
-                </span>
+            <div>
+              <h4>Source Breakdown</h4>
+              <ul>
+                {detail.sourceBreakdown.map((s) => (
+                  <li key={s.name}>{s.name}: {s.count}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4>Key Drivers</h4>
+              <div className="keyword-set">
+                {detail.keywords.map(([k, c]) => <span key={k}>{k} ({c})</span>)}
               </div>
             </div>
           </div>
 
-          <div className="stock-sentiments">
-            <h3>Individual Stock Sentiments</h3>
-            <div className="stock-grid">
-              {marketSentiment.stock_sentiments.map((stock, index) => (
-                <div key={index} className="stock-sentiment-card">
-                  <div className="stock-header">
-                    <span className="stock-symbol">{stock.symbol}</span>
-                    <span
-                      className="stock-sentiment-icon"
-                      style={{ color: getSentimentColor(stock.overall_sentiment) }}
-                    >
-                      {getSentimentIcon(stock.overall_sentiment)}
-                    </span>
-                  </div>
-                  <div className="stock-confidence">
-                    <div className="mini-confidence-bar">
-                      <div
-                        className="mini-confidence-fill"
-                        style={{
-                          width: `${stock.confidence}%`,
-                          backgroundColor: getSentimentColor(stock.overall_sentiment)
-                        }}
-                      ></div>
-                    </div>
-                    <span className="mini-confidence-text">{stock.confidence}%</span>
-                  </div>
-                  <div className="stock-breakdown">
-                    <span>📊 {stock.sentiment_breakdown.positive} Positive</span>
-                    <span>⚪ {stock.sentiment_breakdown.neutral} Neutral</span>
-                    <span>📉 {stock.sentiment_breakdown.negative} Negative</span>
-                  </div>
+          <div className="detail-news">
+            <h4>Related News</h4>
+            {detail.news.map((n, idx) => (
+              <article key={idx}>
+                <strong>{n.title}</strong>
+                <p>{n.summary}</p>
+                <div className="meta">
+                  <span>{n.source}</span>
+                  <span>{n.sentiment?.label}</span>
+                  <span>{n.impact}</span>
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
           </div>
         </div>
       )}
-
-      {activeView === 'stock' && (
-        <div className="stock-sentiment-view">
-          <form onSubmit={handleStockSearch} className="stock-search-form">
-            <input
-              type="text"
-              placeholder="Enter stock symbol (e.g., AAPL, TSLA)"
-              value={selectedStock}
-              onChange={(e) => setSelectedStock(e.target.value.toUpperCase())}
-              className="stock-input"
-            />
-            <button type="submit" className="analyze-btn">
-              Analyze Sentiment
-            </button>
-          </form>
-
-          {stockSentiment && (
-            <div className="stock-sentiment-details">
-              <div className="sentiment-header">
-                <h3>{stockSentiment.symbol} Sentiment Analysis</h3>
-                <div className="sentiment-badge" style={{ backgroundColor: getSentimentColor(stockSentiment.overall_sentiment) }}>
-                  {getSentimentIcon(stockSentiment.overall_sentiment)} {stockSentiment.overall_sentiment.toUpperCase()}
-                </div>
-              </div>
-
-              <div className="sentiment-metrics">
-                <div className="metric-card">
-                  <span className="metric-label">Overall Confidence</span>
-                  <span className="metric-value">{stockSentiment.confidence}%</span>
-                  <div className="metric-bar">
-                    <div
-                      className="metric-fill"
-                      style={{
-                        width: `${stockSentiment.confidence}%`,
-                        backgroundColor: getSentimentColor(stockSentiment.overall_sentiment)
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="metric-card">
-                  <span className="metric-label">Sources Analyzed</span>
-                  <span className="metric-value">{stockSentiment.total_sources}</span>
-                </div>
-              </div>
-
-              <div className="sentiment-breakdown">
-                <h4>Sentiment Breakdown</h4>
-                <div className="breakdown-bars">
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Positive</span>
-                    <div className="breakdown-bar">
-                      <div
-                        className="breakdown-fill positive"
-                        style={{ width: `${(stockSentiment.sentiment_breakdown.positive / stockSentiment.total_sources) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="breakdown-count">{stockSentiment.sentiment_breakdown.positive}</span>
-                  </div>
-
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Neutral</span>
-                    <div className="breakdown-bar">
-                      <div
-                        className="breakdown-fill neutral"
-                        style={{ width: `${(stockSentiment.sentiment_breakdown.neutral / stockSentiment.total_sources) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="breakdown-count">{stockSentiment.sentiment_breakdown.neutral}</span>
-                  </div>
-
-                  <div className="breakdown-item">
-                    <span className="breakdown-label">Negative</span>
-                    <div className="breakdown-bar">
-                      <div
-                        className="breakdown-fill negative"
-                        style={{ width: `${(stockSentiment.sentiment_breakdown.negative / stockSentiment.total_sources) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="breakdown-count">{stockSentiment.sentiment_breakdown.negative}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="sentiment-sources">
-                <div className="sources-section">
-                  <h4>Recent News</h4>
-                  <div className="sources-list">
-                    {stockSentiment.recent_news.map((news, index) => (
-                      <div key={index} className="source-item">
-                        <span className="source-type">📰</span>
-                        <div className="source-content">
-                          <p className="source-text">{news.title}</p>
-                          <span className="source-meta">{news.source}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="sources-section">
-                  <h4>Social Media Sentiment</h4>
-                  <div className="sources-list">
-                    {stockSentiment.social_sentiment.map((social, index) => (
-                      <div key={index} className="source-item">
-                        <span className="source-type">
-                          {social.platform === 'twitter' ? '🐦' : social.platform === 'reddit' ? '🟠' : '📱'}
-                        </span>
-                        <div className="source-content">
-                          <p className="source-text">{social.text}</p>
-                          <span className="source-meta">{social.author || social.platform}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="sentiment-footer">
-        <div className="ai-info">
-          <span className="ai-icon">🤖</span>
-          <span>Powered by LSTM Neural Networks trained on S&P 500 data</span>
-        </div>
-        <button onClick={fetchMarketSentiment} className="refresh-btn">
-          🔄 Refresh Analysis
-        </button>
-      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { stockAPI } from '../api';
+import MarketLoading from './MarketLoading';
 import './MarketNewsIntelligence.css';
 
 function timeAgo(isoDate) {
@@ -31,6 +32,7 @@ function MarketNewsIntelligence({ symbol = '', compact = false }) {
   const [sentimentFilter, setSentimentFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedNews, setSelectedNews] = useState(null);
   const [payload, setPayload] = useState({
     summary: { message: '', label: 'neutral', positive_pct: 0 },
     trending_stocks: [],
@@ -47,11 +49,18 @@ function MarketNewsIntelligence({ symbol = '', compact = false }) {
       try {
         setLoading(true);
         setError('');
-        const data = await stockAPI.getMarketNewsIntelligence({
+        let data = await stockAPI.getMarketNewsIntelligence({
           symbol: tickerFilter.trim(),
           sentiment: sentimentFilter,
           limit: compact ? 8 : 24,
         });
+        if ((data.items || []).length === 0 && (tickerFilter.trim() || sentimentFilter)) {
+          data = await stockAPI.getMarketNewsIntelligence({
+            symbol: '',
+            sentiment: '',
+            limit: compact ? 8 : 24,
+          });
+        }
         setPayload(data);
       } catch (err) {
         setError('Unable to load market intelligence right now.');
@@ -114,14 +123,14 @@ function MarketNewsIntelligence({ symbol = '', compact = false }) {
         </div>
       )}
 
-      {loading && <div className="news-state">Loading market intelligence...</div>}
+      {loading && <MarketLoading label="Loading market news intelligence..." compact />}
       {error && <div className="news-state error">{error}</div>}
       {!loading && !error && visibleItems.length === 0 && <div className="news-state">No news matched your filters.</div>}
 
       {!loading && !error && visibleItems.length > 0 && (
         <div className="news-grid">
           {visibleItems.map((item, idx) => (
-            <article key={`${item.symbol}-${idx}`} className="news-card-intel">
+            <article key={`${item.symbol}-${idx}`} className="news-card-intel" onClick={() => setSelectedNews(item)}>
               <div className="news-card-top">
                 <span className="ticker-badge">{item.symbol}</span>
                 <span className={`sentiment-pill ${sentimentClass(item.sentiment?.label)}`}>
@@ -148,6 +157,39 @@ function MarketNewsIntelligence({ symbol = '', compact = false }) {
               </footer>
             </article>
           ))}
+        </div>
+      )}
+
+      {selectedNews && (
+        <div className="news-detail-overlay" onClick={() => setSelectedNews(null)}>
+          <div className="news-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <header>
+              <h4>{selectedNews.title}</h4>
+              <button onClick={() => setSelectedNews(null)}>Close</button>
+            </header>
+            <div className="news-detail-meta">
+              <span className={`sentiment-pill ${sentimentClass(selectedNews.sentiment?.label)}`}>
+                {selectedNews.sentiment?.label} ({selectedNews.sentiment?.score})
+              </span>
+              <span className={`impact-pill impact-${selectedNews.impact}`}>{impactSymbol(selectedNews.impact)}</span>
+              <span>{selectedNews.symbol}</span>
+              <span>{selectedNews.source}</span>
+            </div>
+            <p>{selectedNews.summary}</p>
+            <div className="keyword-row">
+              {(selectedNews.keywords || []).map((keyword) => (
+                <span key={keyword}>{keyword}</span>
+              ))}
+            </div>
+            <footer>
+              <span>Confidence: {selectedNews.confidence}</span>
+              {selectedNews.url ? (
+                <a href={selectedNews.url} target="_blank" rel="noreferrer">
+                  Open Source Article
+                </a>
+              ) : null}
+            </footer>
+          </div>
         </div>
       )}
     </section>

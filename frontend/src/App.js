@@ -12,6 +12,9 @@ import UserPanel from './components/UserPanel';
 import NavigationBar from './components/NavigationBar';
 import SentimentAnalysis from './components/SentimentAnalysis';
 import MarketNewsIntelligence from './components/MarketNewsIntelligence';
+import WatchlistDashboard from './components/WatchlistDashboard';
+import PortfolioDashboard from './components/PortfolioDashboard';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -125,19 +128,17 @@ function Dashboard() {
 
         {activeTab === 'watchlist' && (
           <div className="watchlist-layout">
-            <div className="watchlist-content">
-              <h2>My Watchlist</h2>
-              <p>Watchlist functionality coming soon...</p>
-            </div>
+            <WatchlistDashboard
+              companies={companies}
+              selectedStock={selectedStock}
+              onSelectStock={setSelectedStock}
+            />
           </div>
         )}
 
         {activeTab === 'portfolio' && (
           <div className="portfolio-layout">
-            <div className="portfolio-content">
-              <h2>My Portfolio</h2>
-              <p>Portfolio tracking coming soon...</p>
-            </div>
+            <PortfolioDashboard companies={companies} />
           </div>
         )}
 
@@ -164,10 +165,7 @@ function Dashboard() {
 
         {activeTab === 'analytics' && (
           <div className="analytics-layout">
-            <div className="analytics-content">
-              <h2>Advanced Analytics</h2>
-              <p>Analytics dashboard coming soon...</p>
-            </div>
+            <AnalyticsDashboard symbol={selectedStock?.symbol} />
           </div>
         )}
       </main>

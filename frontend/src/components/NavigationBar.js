@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './NavigationBar.css';
 
 const NavigationBar = ({
@@ -14,6 +14,7 @@ const NavigationBar = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const profileRef = useRef(null);
 
   const navigationItems = [
     {
@@ -80,6 +81,17 @@ const NavigationBar = ({
     setSearchQuery('');
     setShowSearchResults(false);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [setShowProfileMenu]);
 
   return (
     <nav className="navigation-bar">
@@ -169,7 +181,7 @@ const NavigationBar = ({
         </div>
 
         {/* User Profile */}
-        <div className="nav-profile">
+        <div className="nav-profile" ref={profileRef}>
           <button
             className="profile-button"
             onClick={() => setShowProfileMenu(!showProfileMenu)}

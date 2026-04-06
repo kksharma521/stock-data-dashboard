@@ -1,6 +1,22 @@
 const API_BASE = 'http://localhost:8000';
 const intelligenceCache = new Map();
 const INTEL_CACHE_TTL_MS = 60 * 1000;
+const genericCache = new Map();
+const GENERIC_TTL_MS = 45 * 1000;
+
+const getCached = (key) => {
+  const entry = genericCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > GENERIC_TTL_MS) {
+    genericCache.delete(key);
+    return null;
+  }
+  return entry.data;
+};
+
+const setCached = (key, data) => {
+  genericCache.set(key, { ts: Date.now(), data });
+};
 
 // Helper for fetch with timeout to prevent long waits
 const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
@@ -19,10 +35,15 @@ const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
 export const stockAPI = {
   // Get list of available companies
   getCompanies: async () => {
+    const key = 'companies';
+    const cached = getCached(key);
+    if (cached) return cached;
     try {
       const response = await fetchWithTimeout(`${API_BASE}/companies`, {}, 10000);
       if (!response.ok) throw new Error('Failed to fetch companies');
-      return await response.json();
+      const data = await response.json();
+      setCached(key, data);
+      return data;
     } catch (error) {
       console.error('Error fetching companies:', error);
 
@@ -42,10 +63,15 @@ export const stockAPI = {
 
   // Get stock data and analysis
   getStockData: async (symbol, period = 30) => {
+    const key = `stock:${symbol}:${period}`;
+    const cached = getCached(key);
+    if (cached) return cached;
     try {
       const response = await fetchWithTimeout(`${API_BASE}/data/${symbol}?period=${period}`, {}, 12000);
       if (!response.ok) throw new Error(`Failed to fetch data for ${symbol}`);
-      return await response.json();
+      const data = await response.json();
+      setCached(key, data);
+      return data;
     } catch (error) {
       console.error(`Error fetching stock data for ${symbol}:`, error);
 
@@ -69,16 +95,22 @@ export const stockAPI = {
         },
       };
 
+      setCached(key, fallbackData);
       return fallbackData;
     }
   },
 
   // Get stock summary
   getSummary: async (symbol) => {
+    const key = `summary:${symbol}`;
+    const cached = getCached(key);
+    if (cached) return cached;
     try {
       const response = await fetchWithTimeout(`${API_BASE}/summary/${symbol}`, {}, 10000);
       if (!response.ok) throw new Error(`Failed to fetch summary for ${symbol}`);
-      return await response.json();
+      const data = await response.json();
+      setCached(key, data);
+      return data;
     } catch (error) {
       console.error(`Error fetching summary for ${symbol}:`, error);
 
@@ -121,14 +153,19 @@ export const stockAPI = {
 
   // Get market status
   getMarketStatus: async () => {
+    const key = 'marketStatus';
+    const cached = getCached(key);
+    if (cached) return cached;
     try {
       const response = await fetchWithTimeout(`${API_BASE}/market/status`, {}, 10000);
       if (!response.ok) throw new Error('Failed to fetch market status');
-      return await response.json();
+      const data = await response.json();
+      setCached(key, data);
+      return data;
     } catch (error) {
       console.error('Error fetching market status:', error);
       // Fallback market status
-      return {
+      const fallback = {
         us_market: {
           is_open: false,
           status: 'Market Status Unavailable',
@@ -141,6 +178,8 @@ export const stockAPI = {
         },
         timestamp: new Date().toISOString()
       };
+      setCached(key, fallback);
+      return fallback;
     }
   },
 

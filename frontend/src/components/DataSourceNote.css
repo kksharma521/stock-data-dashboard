@@ -1,0 +1,13 @@
+.data-source-note {
+  border: 1px solid #dce5f1;
+  background: #f6faff;
+  border-radius: 8px;
+  color: #4f627c;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.data-source-note.compact {
+  font-size: 0.74rem;
+  padding: 6px 8px;
+}

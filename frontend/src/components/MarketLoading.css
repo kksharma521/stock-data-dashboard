@@ -1,0 +1,59 @@
+.market-loading {
+  border: 1px solid #dbe4f1;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7fbff, #f0f6ff);
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.market-loading.compact {
+  padding: 12px;
+}
+
+.ticker-animation {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticker-animation .dot {
+  width: 12px;
+  height: 12px;
+  background: #1d4ed8;
+  border-radius: 50%;
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+.ticker-animation .line {
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, #1d4ed8, #10b981, #1d4ed8);
+  border-radius: 999px;
+  animation: flow-line 1.8s infinite linear;
+}
+
+.loading-text {
+  color: #102742;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.loading-tip {
+  color: #4f6380;
+  font-size: 0.85rem;
+  max-width: 520px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(0.85); opacity: 0.65; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes flow-line {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(35deg); }
+}

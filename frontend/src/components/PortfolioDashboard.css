@@ -1,0 +1,120 @@
+.portfolio-dashboard {
+  display: grid;
+  gap: 14px;
+}
+
+.portfolio-dashboard header h2 {
+  margin: 0;
+  color: #112a49;
+}
+
+.portfolio-dashboard header p {
+  margin: 5px 0 0;
+  color: #536783;
+}
+
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.portfolio-summary .card {
+  border: 1px solid #dce5f1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.portfolio-summary .card span {
+  color: #5b6e86;
+  font-size: 0.8rem;
+}
+
+.portfolio-summary .card strong {
+  color: #153251;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 12px;
+}
+
+.trade-form,
+.holdings {
+  border: 1px solid #dce5f1;
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+
+.trade-form {
+  display: grid;
+  gap: 8px;
+}
+
+.trade-form h3,
+.holdings h3 {
+  margin: 0 0 6px;
+  color: #163554;
+}
+
+.trade-form label {
+  font-size: 0.8rem;
+  color: #5c6f87;
+}
+
+.trade-form input,
+.trade-form select {
+  border: 1px solid #d1dbe8;
+  border-radius: 8px;
+  padding: 8px 9px;
+}
+
+.trade-form button {
+  border: 0;
+  background: #174a92;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.holdings table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.holdings th,
+.holdings td {
+  border-bottom: 1px solid #e5ebf5;
+  padding: 8px;
+  text-align: left;
+  font-size: 0.84rem;
+}
+
+.up {
+  color: #0f8c4d;
+}
+
+.down {
+  color: #b42d2d;
+}
+
+.empty {
+  margin: 0;
+  color: #5f7087;
+}
+
+@media (max-width: 900px) {
+  .portfolio-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -181,6 +181,25 @@ tbody tr:nth-child(even) {
   background: #2980b9;
 }
 
+.top-stocks-skeleton {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.skeleton-row {
+  height: 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #edf2f8, #f7f9fc, #edf2f8);
+  background-size: 220% 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
 @media (max-width: 768px) {
   .top-stocks-header {
     flex-direction: column;

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Chart from 'react-apexcharts';
+import MarketLoading from './MarketLoading';
 import './StockChart.css';
 
 function StockChart({ data, symbol, analysis }) {
@@ -78,7 +79,7 @@ function StockChart({ data, symbol, analysis }) {
   }), [isExpanded, viewMode, yAxisTitle]);
 
   if (!rangeData.length) {
-    return <div className="stock-chart empty">No chart data available.</div>;
+    return <MarketLoading label="Loading chart and technical overlays..." compact />;
   }
 
   const chartBody = (

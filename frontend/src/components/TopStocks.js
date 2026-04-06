@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { stockAPI } from '../api';
+import MarketLoading from './MarketLoading';
 import './TopStocks.css';
+
+let topStocksCache = null;
+let topStocksCacheAt = 0;
+const TOP_STOCKS_TTL_MS = 60 * 1000;
 
 function TopStocks() {
   const [activeTab, setActiveTab] = useState('earners');
@@ -17,30 +22,45 @@ function TopStocks() {
   const loadAllTopStocks = async () => {
     try {
       setError('');
+      const now = Date.now();
+      if (topStocksCache && now - topStocksCacheAt < TOP_STOCKS_TTL_MS) {
+        setEarners(topStocksCache.earners);
+        setLongTerm(topStocksCache.longTerm);
+        setDaily(topStocksCache.daily);
+        setLoading(false);
+        return;
+      }
 
-      // Load earners first and show immediately
       setLoading(true);
-      const earnersData = await stockAPI.getTopEarners();
-      setEarners(earnersData.top_earners || []);
-      setLoading(false);
+      const [earnersData, longTermData, dailyData] = await Promise.all([
+        stockAPI.getTopEarners(),
+        stockAPI.getTopLongTerm(),
+        stockAPI.getTopDailyStocks(),
+      ]);
 
-      // Load long-term stocks in background
-      const longTermData = await stockAPI.getTopLongTerm();
-      setLongTerm(longTermData.top_long_term || []);
+      const data = {
+        earners: earnersData.top_earners || [],
+        longTerm: longTermData.top_long_term || [],
+        daily: dailyData.top_daily || [],
+      };
 
-      // Load daily stocks in background
-      const dailyData = await stockAPI.getTopDailyStocks();
-      setDaily(dailyData.top_daily || []);
+      topStocksCache = data;
+      topStocksCacheAt = now;
+
+      setEarners(data.earners);
+      setLongTerm(data.longTerm);
+      setDaily(data.daily);
     } catch (err) {
       setError('Failed to load top stocks data');
       console.error(err);
+    } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (value, market) => {
     if (market === 'NSE') {
-      return `₹${value.toLocaleString('en-IN')}`;
+      return `?${value.toLocaleString('en-IN')}`;
     }
     return `$${value.toLocaleString('en-US')}`;
   };
@@ -50,6 +70,14 @@ function TopStocks() {
     const sign = value >= 0 ? '+' : '';
     return <span className={color}>{sign}{value.toFixed(2)}%</span>;
   };
+
+  const renderSkeletonRows = () => (
+    <div className="top-stocks-skeleton">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="skeleton-row" />
+      ))}
+    </div>
+  );
 
   const renderEarnersTable = () => (
     <div className="top-stocks-table">
@@ -164,7 +192,12 @@ function TopStocks() {
   );
 
   if (loading) {
-    return <div className="top-stocks-loading">Loading top stocks data...</div>;
+    return (
+      <div>
+        <MarketLoading label="Loading top stocks and performance leaders..." />
+        {renderSkeletonRows()}
+      </div>
+    );
   }
 
   if (error) {
@@ -181,22 +214,13 @@ function TopStocks() {
       <div className="top-stocks-header">
         <h2>Top Performing Stocks</h2>
         <div className="tab-buttons">
-          <button
-            className={`tab-button ${activeTab === 'earners' ? 'active' : ''}`}
-            onClick={() => setActiveTab('earners')}
-          >
+          <button className={`tab-button ${activeTab === 'earners' ? 'active' : ''}`} onClick={() => setActiveTab('earners')}>
             Top Earners
           </button>
-          <button
-            className={`tab-button ${activeTab === 'longterm' ? 'active' : ''}`}
-            onClick={() => setActiveTab('longterm')}
-          >
+          <button className={`tab-button ${activeTab === 'longterm' ? 'active' : ''}`} onClick={() => setActiveTab('longterm')}>
             Long-Term
           </button>
-          <button
-            className={`tab-button ${activeTab === 'daily' ? 'active' : ''}`}
-            onClick={() => setActiveTab('daily')}
-          >
+          <button className={`tab-button ${activeTab === 'daily' ? 'active' : ''}`} onClick={() => setActiveTab('daily')}>
             Best of Day
           </button>
         </div>

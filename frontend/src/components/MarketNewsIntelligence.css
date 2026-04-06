@@ -127,6 +127,7 @@
   padding: 14px;
   display: grid;
   gap: 10px;
+  cursor: pointer;
 }
 
 .news-card-intel:hover {
@@ -212,6 +213,54 @@
   color: #1a5abf;
   text-decoration: none;
   font-weight: 600;
+}
+
+.news-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 18, 31, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+  padding: 16px;
+}
+
+.news-detail-modal {
+  width: min(760px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.news-detail-modal header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.news-detail-modal header h4 {
+  margin: 0;
+  color: #12283f;
+}
+
+.news-detail-modal header button {
+  border: 1px solid #d4dde9;
+  background: #f7fbff;
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.news-detail-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #4f5f76;
 }
 
 .market-news.compact .market-news-header {

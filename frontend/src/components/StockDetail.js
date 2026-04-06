@@ -7,6 +7,8 @@ import AlertsSection from './AlertsSection';
 import NewsSection from './NewsSection';
 import SmartInsights from './SmartInsights';
 import TopMovers from './TopMovers';
+import MarketLoading from './MarketLoading';
+import DataSourceNote from './DataSourceNote';
 import './StockDetail.css';
 
 function StockDetail({ company }) {
@@ -41,7 +43,7 @@ function StockDetail({ company }) {
   }
 
   if (loading) {
-    return <div className="stock-detail loading">Loading {symbol} market data...</div>;
+    return <MarketLoading label={`Loading ${symbol} market data...`} />;
   }
 
   if (error) {
@@ -80,11 +82,12 @@ function StockDetail({ company }) {
       </div>
 
       <AlertsSection symbol={symbol} />
-      <SmartInsights symbol={symbol} analysis={analysis} />
+      <SmartInsights symbol={symbol} analysis={analysis} data={data} />
       <TopMovers />
       <AdvancedMetrics analysis={analysis} />
       <StockChart data={data} symbol={symbol} analysis={analysis} />
       <NewsSection symbol={symbol} />
+      <DataSourceNote compact />
     </div>
   );
 }
