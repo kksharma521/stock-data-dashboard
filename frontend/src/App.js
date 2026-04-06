@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { stockAPI } from './api';
-import { authAPI } from './authAPI';
 import StockList from './components/StockList';
 import StockDetail from './components/StockDetail';
 import StockComparison from './components/StockComparison';
 import TopStocks from './components/TopStocks';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import UserPanel from './components/UserPanel';
 import NavigationBar from './components/NavigationBar';
 import SentimentAnalysis from './components/SentimentAnalysis';
 import MarketNewsIntelligence from './components/MarketNewsIntelligence';
 import WatchlistDashboard from './components/WatchlistDashboard';
 import PortfolioDashboard from './components/PortfolioDashboard';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function Dashboard() {
@@ -23,11 +18,6 @@ function Dashboard() {
   const [companies, setCompanies] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -44,30 +34,8 @@ function Dashboard() {
       }
     };
 
-    // Load user profile
-    const loadUserProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const profileData = await authAPI.getProfile(token);
-          setUser(profileData);
-        }
-      } catch (error) {
-        console.error('Failed to load user profile', error);
-      }
-    };
-
     fetchCompanies();
-    loadUserProfile();
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setShowProfileMenu(false);
-    // Navigate to login will be handled by ProtectedRoute
-  };
 
   if (loading) {
     return <div className="app-loading">Initializing dashboard...</div>;
@@ -78,10 +46,6 @@ function Dashboard() {
       <NavigationBar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        user={user}
-        showProfileMenu={showProfileMenu}
-        setShowProfileMenu={setShowProfileMenu}
-        handleLogout={handleLogout}
         selectedStock={selectedStock}
         setSelectedStock={setSelectedStock}
         companies={companies}
@@ -102,12 +66,6 @@ function Dashboard() {
         {activeTab === 'topstocks' && (
           <div className="topstocks-layout">
             <TopStocks />
-          </div>
-        )}
-
-        {activeTab === 'userpanel' && (
-          <div className="userpanel-layout">
-            <UserPanel />
           </div>
         )}
 
@@ -178,38 +136,17 @@ function Dashboard() {
 }
 
 function App() {
-  const token = localStorage.getItem('token');
-
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* Auth pages are bypassed to avoid blocking access */}
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <UserPanel />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Redirect Logic */}
-        <Route
-          path="/"
-          element={token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
-        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

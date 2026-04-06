@@ -3,7 +3,6 @@ import { stockAPI } from '../api';
 import StockChart from './StockChart';
 import AdvancedMetrics from './AdvancedMetrics';
 import MarketStatus from './MarketStatus';
-import AlertsSection from './AlertsSection';
 import NewsSection from './NewsSection';
 import SmartInsights from './SmartInsights';
 import TopMovers from './TopMovers';
@@ -81,11 +80,10 @@ function StockDetail({ company }) {
         </div>
       </div>
 
-      <AlertsSection symbol={symbol} />
       <SmartInsights symbol={symbol} analysis={analysis} data={data} />
       <TopMovers />
       <AdvancedMetrics analysis={analysis} />
-      <StockChart data={data} symbol={symbol} analysis={analysis} />
+      <StockChart data={data} symbol={symbol} analysis={analysis} selectedPeriod={period} />
       <NewsSection symbol={symbol} />
       <DataSourceNote compact />
     </div>

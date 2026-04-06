@@ -27,35 +27,35 @@ function AlertsSection({ symbol }) {
     fetchAlerts();
   }, [symbol]);
 
-  const getAlertIcon = (type) => {
+  const getAlertTag = (type) => {
     switch (type) {
-      case 'success': return '✅';
-      case 'warning': return '⚠️';
-      case 'alert': return '🔴';
-      case 'info': return 'ℹ️';
-      default: return '📌';
+      case 'success': return 'OK';
+      case 'warning': return 'WARN';
+      case 'alert': return 'ALRT';
+      case 'info': return 'INFO';
+      default: return 'NOTE';
     }
   };
 
   if (loading) {
-    return <div className="alerts-section loading">⏳ Loading alerts...</div>;
+    return <div className="alerts-section loading">Loading alerts...</div>;
   }
 
   if (error) {
-    return <div className="alerts-section error">❌ {error}</div>;
+    return <div className="alerts-section error">{error}</div>;
   }
 
   if (!alerts || alerts.length === 0) {
-    return <div className="alerts-section empty">📌 No alerts for {symbol}</div>;
+    return <div className="alerts-section empty">No alerts for {symbol}</div>;
   }
 
   return (
     <div className="alerts-section">
-      <h3>🔔 Stock Alerts & Signals</h3>
+      <h3>Stock Alerts and Signals</h3>
       <div className="alerts-container">
         {alerts.map((alert, index) => (
           <div key={index} className={`alert-card ${alert.type}`}>
-            <div className="alert-icon">{getAlertIcon(alert.type)}</div>
+            <div className="alert-icon">{getAlertTag(alert.type)}</div>
             <div className="alert-content">
               <h4>{alert.title}</h4>
               <p>{alert.message}</p>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../authAPI';
-import { stockAPI } from '../api';
 import './UserPanel.css';
 
 function UserPanel() {
@@ -19,7 +18,7 @@ function UserPanel() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         navigate('/login');
         return;
@@ -53,7 +52,7 @@ function UserPanel() {
   };
 
   if (loading) {
-    return <div className="user-panel loading">⏳ Loading profile...</div>;
+    return <div className="user-panel loading">Loading profile...</div>;
   }
 
   if (error) {
@@ -73,7 +72,7 @@ function UserPanel() {
           <p className="user-email">{user.email}</p>
           <p className="user-username">@{user.username}</p>
         </div>
-        <button className="logout-button" onClick={handleLogout}>🚪 Logout</button>
+        <button className="logout-button" onClick={handleLogout}>Logout</button>
       </div>
 
       <div className="user-stats">
@@ -87,16 +86,16 @@ function UserPanel() {
         </div>
         <div className="stat-item">
           <span className="stat-label">Notifications</span>
-          <span className="stat-value">{user.notifications ? '🔔 On' : '🔕 Off'}</span>
+          <span className="stat-value">{user.notifications ? 'On' : 'Off'}</span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Theme</span>
-          <span className="stat-value">{user.theme === 'light' ? '☀️ Light' : '🌙 Dark'}</span>
+          <span className="stat-value">{user.theme === 'light' ? 'Light' : 'Dark'}</span>
         </div>
       </div>
 
       <div className="watchlist-section">
-        <h3>📋 My Watchlist</h3>
+        <h3>My Watchlist</h3>
         {watchlist.length === 0 ? (
           <div className="empty-watchlist">
             <p>No stocks in your watchlist yet</p>
@@ -112,7 +111,7 @@ function UserPanel() {
                   onClick={() => handleRemoveFromWatchlist(symbol)}
                   title="Remove from watchlist"
                 >
-                  ✕
+                  Remove
                 </button>
               </div>
             ))}
@@ -121,25 +120,25 @@ function UserPanel() {
       </div>
 
       <div className="suggestions-section">
-        <h3>💡 Personalized Suggestions</h3>
+        <h3>Personalized Suggestions</h3>
         <div className="suggestions-grid">
           <div className="suggestion-card">
-            <span className="suggestion-icon">📈</span>
+            <span className="suggestion-icon">TS</span>
             <h4>Trending Stocks</h4>
             <p>Track the most popular stocks today</p>
           </div>
           <div className="suggestion-card">
-            <span className="suggestion-icon">🎯</span>
+            <span className="suggestion-icon">WL</span>
             <h4>Your Watchlist</h4>
             <p>Monitor {watchlist.length} stocks in your list</p>
           </div>
           <div className="suggestion-card">
-            <span className="suggestion-icon">💰</span>
+            <span className="suggestion-icon">AL</span>
             <h4>Market Alerts</h4>
             <p>Get notified of significant price changes</p>
           </div>
           <div className="suggestion-card">
-            <span className="suggestion-icon">📊</span>
+            <span className="suggestion-icon">AN</span>
             <h4>Analysis</h4>
             <p>Deep dive into stock performance</p>
           </div>
@@ -147,14 +146,10 @@ function UserPanel() {
       </div>
 
       <div className="account-settings">
-        <h3>⚙️ Account Settings</h3>
+        <h3>Account Settings</h3>
         <div className="settings-item">
           <label>
-            <input
-              type="checkbox"
-              checked={user.notifications}
-              readOnly
-            />
+            <input type="checkbox" checked={user.notifications} readOnly />
             <span>Enable Notifications</span>
           </label>
         </div>

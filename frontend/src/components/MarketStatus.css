@@ -31,8 +31,13 @@
   gap: 16px;
 }
 
-.status-icon {
-  font-size: 32px;
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .status-info {

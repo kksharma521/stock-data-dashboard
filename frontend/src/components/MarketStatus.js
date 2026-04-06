@@ -20,13 +20,12 @@ function MarketStatus() {
     };
 
     fetchStatus();
-    // Refresh every 30 seconds
     const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
   if (loading || !status) {
-    return <div className="market-status loading">⏳ Loading market status...</div>;
+    return <div className="market-status loading">Loading market status...</div>;
   }
 
   const usMarket = status.us_market;
@@ -36,7 +35,7 @@ function MarketStatus() {
     <div className="market-status-container">
       <div className={`market-status ${usMarket?.is_open ? 'open' : 'closed'}`}>
         <div className="status-badge">
-          <span className="status-icon">{usMarket?.is_open ? '🟢' : '🔴'}</span>
+          <span className="status-dot" aria-hidden="true"></span>
           <div className="status-info">
             <h4>US Market</h4>
             <h3>{usMarket?.status}</h3>
@@ -47,7 +46,7 @@ function MarketStatus() {
 
       <div className={`market-status ${indiaMarket?.is_open ? 'open' : 'closed'}`}>
         <div className="status-badge">
-          <span className="status-icon">{indiaMarket?.is_open ? '🟢' : '🔴'}</span>
+          <span className="status-dot" aria-hidden="true"></span>
           <div className="status-info">
             <h4>Indian Market</h4>
             <h3>{indiaMarket?.status}</h3>

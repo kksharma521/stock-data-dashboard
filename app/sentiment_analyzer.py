@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
@@ -120,7 +120,7 @@ class StockSentimentAnalyzer:
             # Mock social media data - in production, use Twitter API, Reddit API, etc.
             mock_social = [
                 {
-                    'text': f'Just bought more {symbol} shares! Bullish on the future 🚀',
+                    'text': f'Just bought more {symbol} shares. Bullish on the future.',
                     'platform': 'twitter',
                     'sentiment': 'positive'
                 },
@@ -135,7 +135,7 @@ class StockSentimentAnalyzer:
                     'sentiment': 'negative'
                 },
                 {
-                    'text': f'{symbol} showing great technical patterns 📈',
+                    'text': f'{symbol} showing strong technical patterns',
                     'platform': 'stocktwits',
                     'sentiment': 'positive'
                 }

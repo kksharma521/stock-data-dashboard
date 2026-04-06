@@ -3,15 +3,15 @@ import Chart from 'react-apexcharts';
 import MarketLoading from './MarketLoading';
 import './StockChart.css';
 
-function StockChart({ data, symbol, analysis }) {
+function StockChart({ data, symbol, analysis, selectedPeriod = 30 }) {
   const [viewMode, setViewMode] = useState('price');
-  const [timeRange, setTimeRange] = useState(30);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const rangeData = useMemo(() => {
     if (!Array.isArray(data)) return [];
-    return data.slice(-timeRange);
-  }, [data, timeRange]);
+    // Data from API is already scoped to selected period.
+    return data;
+  }, [data]);
 
   const mapped = useMemo(() => {
     return rangeData.map((row) => ({
@@ -91,11 +91,7 @@ function StockChart({ data, symbol, analysis }) {
           <button className={viewMode === 'compare' ? 'active' : ''} onClick={() => setViewMode('compare')}>Comparison</button>
         </div>
         <div className="chart-range-switch">
-          {[7, 30, 90].map((range) => (
-            <button key={range} className={timeRange === range ? 'active' : ''} onClick={() => setTimeRange(range)}>
-              {range}d
-            </button>
-          ))}
+          <span className="active-range-label">Showing last {selectedPeriod} days</span>
           <button className="expand-btn" onClick={() => setIsExpanded(true)}>Expand View</button>
         </div>
       </div>

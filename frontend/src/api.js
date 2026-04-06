@@ -75,17 +75,35 @@ export const stockAPI = {
     } catch (error) {
       console.error(`Error fetching stock data for ${symbol}:`, error);
 
+      const syntheticSeries = [];
+      const basePrice = 100;
+      for (let i = period - 1; i >= 0; i -= 1) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const drift = (period - i) * 0.12;
+        const wave = Math.sin((period - i) / 3) * 1.8;
+        const close = Number((basePrice + drift + wave).toFixed(2));
+        const open = Number((close - 0.6).toFixed(2));
+        const high = Number((close + 1.1).toFixed(2));
+        const low = Number((close - 1.2).toFixed(2));
+        syntheticSeries.push({
+          date: date.toISOString().slice(0, 10),
+          open,
+          close,
+          high,
+          low,
+          ma_7: close,
+          daily_return_pct: i === period - 1 ? 0 : Number((((close - syntheticSeries[syntheticSeries.length - 1].close) / syntheticSeries[syntheticSeries.length - 1].close) * 100).toFixed(2)),
+        });
+      }
+
       // Fallback placeholder data to keep UI responsive
       const fallbackData = {
         symbol: symbol.toUpperCase(),
-        data: [
-          { date: '2026-03-25', open: 100, close: 102, high: 103, low: 99, ma_7: 100.5, daily_return_pct: 2 },
-          { date: '2026-03-26', open: 102, close: 101, high: 104, low: 100, ma_7: 101.0, daily_return_pct: -0.98 },
-          { date: '2026-03-27', open: 101, close: 103, high: 105, low: 100, ma_7: 101.5, daily_return_pct: 1.98 },
-        ],
+        data: syntheticSeries,
         analysis: {
-          latest_price: 103,
-          average_price: 101.5,
+          latest_price: syntheticSeries[syntheticSeries.length - 1]?.close ?? 103,
+          average_price: Number((syntheticSeries.reduce((sum, row) => sum + row.close, 0) / syntheticSeries.length).toFixed(2)),
           '52_week_high': 150,
           '52_week_low': 90,
           volatility_pct: 1.23,

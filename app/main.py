@@ -94,6 +94,10 @@ def verify_turnstile_token(token: Optional[str], remote_ip: Optional[str] = None
         return False
 
     secret_key = os.getenv("TURNSTILE_SECRET_KEY", TURNSTILE_TEST_SECRET)
+    # Local/dev mode: accept widget token when using Cloudflare's public test secret.
+    if secret_key == TURNSTILE_TEST_SECRET:
+        return True
+
     payload = {
         "secret": secret_key,
         "response": token,
@@ -278,7 +282,9 @@ def login(request: LoginRequest, db = Depends(get_db)):
     # Sanitize input
     request.email = sanitize_input(request.email, 254)
 
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(
+        (User.email == request.email) | (User.username == request.email)
+    ).first()
 
     if not user or not verify_password(request.password, user.hashed_password):
         # Log failed attempt (hash sensitive data)

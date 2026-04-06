@@ -1,4 +1,4 @@
-.loading-insights {
+﻿.loading-insights {
   margin: 20px 0;
   padding: 25px;
   border-radius: 16px;
@@ -489,10 +489,7 @@
   gap: 4px;
 }
 
-.source::before {
-  content: '📊';
-  font-size: 10px;
-}
+.source::before {`r`n  content: 'SRC';`r`n  font-size: 9px;`r`n  font-weight: 700;`r`n  border: 1px solid #d6dce6;`r`n  border-radius: 4px;`r`n  padding: 1px 4px;`r`n}
 
 .timestamp {
   color: #9ca3af;
@@ -617,10 +614,7 @@
   gap: 5px;
 }
 
-.auto-refresh::before {
-  content: '⏰';
-  animation: clock-tick 2s linear infinite;
-}
+.auto-refresh::before {`r`n  content: 'AUTO';`r`n  font-size: 10px;`r`n  font-weight: 700;`r`n  animation: clock-tick 2s linear infinite;`r`n}
 
 @keyframes clock-tick {
   0%, 100% { transform: rotate(0deg); }

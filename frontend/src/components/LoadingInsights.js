@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './LoadingInsights.css';
 
 const LoadingInsights = ({ query }) => {
@@ -210,7 +210,7 @@ const LoadingInsights = ({ query }) => {
       const mockData = generateMockData(query);
 
       const analyses = mockData.map((item, index) => {
-        const text = item.title ? `${item.title} — ${item.content || item.text}` : item.text;
+        const text = item.title ? `${item.title} â€” ${item.content || item.text}` : item.text;
         const analysis = advancedSentimentAnalyzer.analyze(text);
 
         return {
@@ -329,7 +329,7 @@ const LoadingInsights = ({ query }) => {
               <div className="loading-progress-fill" style={{ width: `${analysisProgress}%` }} />
             </div>
             <span className="loading-progress-text">
-              {Math.round(analysisProgress)}% Complete • {analysisProgress < 100 ? loadingTips[currentTip] : 'Finalizing insights...'}
+              {Math.round(analysisProgress)}% Complete â€¢ {analysisProgress < 100 ? loadingTips[currentTip] : 'Finalizing insights...'}
             </span>
           </div>
         </div>
@@ -380,8 +380,7 @@ const LoadingInsights = ({ query }) => {
       <div className={`insight-notification ${currentInsight.sentiment}`}>
         <div className="sentiment-indicator">
           <div className="sentiment-icon">
-            {currentInsight.sentiment === 'positive' ? '📈' :
-             currentInsight.sentiment === 'negative' ? '📉' : '➡️'}
+            {currentInsight.sentiment === 'positive' ? 'UP' : currentInsight.sentiment === 'negative' ? 'DOWN' : 'FLAT'}
           </div>
           <div className="sentiment-label">
             {currentInsight.sentiment.toUpperCase()}
@@ -424,7 +423,7 @@ const LoadingInsights = ({ query }) => {
 
       <div className="insights-footer">
         <button onClick={handleRefresh} className="refresh-btn">
-          🔄 Refresh Analysis
+Refresh Analysis
         </button>
         <span className="auto-refresh">Auto-refresh: 10s</span>
       </div>

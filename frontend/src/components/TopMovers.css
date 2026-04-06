@@ -7,8 +7,40 @@
 }
 
 .top-movers h3 {
-  margin: 0 0 10px;
+  margin: 0;
   color: #102843;
+}
+
+.top-movers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.top-movers-head select {
+  border: 1px solid #d3deec;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.84rem;
+  color: #173453;
+  background: #fff;
+}
+
+.top-movers-state {
+  border: 1px dashed #d7e1ee;
+  border-radius: 10px;
+  padding: 10px;
+  color: #4d5f78;
+  font-size: 0.84rem;
+  margin-bottom: 10px;
+}
+
+.top-movers-state.error {
+  border-color: #f0bdbd;
+  color: #9c2e2e;
+  background: #fff6f6;
 }
 
 .movers-grid {
@@ -53,6 +85,11 @@
 }
 
 @media (max-width: 768px) {
+  .top-movers-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .movers-grid {
     grid-template-columns: 1fr;
   }

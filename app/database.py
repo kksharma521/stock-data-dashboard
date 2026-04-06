@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Integer, Float, Text, text
+﻿from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Integer, Float, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -18,12 +18,12 @@ try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         DATABASE_URL = MYSQL_URL
-        print("✅ Using MySQL database")
+        print("Using MySQL database")
     except Exception as e:
-        print(f"⚠️  MySQL not available ({e}), falling back to SQLite")
+        print(f"MySQL not available ({e}), falling back to SQLite")
         engine = None
 except Exception as e:
-    print(f"⚠️  MySQL driver not available ({e}), falling back to SQLite")
+    print(f"MySQL driver not available ({e}), falling back to SQLite")
     engine = None
 
 # Fall back to SQLite if MySQL is not available
@@ -84,6 +84,34 @@ class UserStock(Base):
 
 
 Base.metadata.create_all(bind=engine)
+
+
+def _ensure_sqlite_user_columns():
+    """Add missing columns to legacy SQLite users table without dropping data."""
+    if engine.dialect.name != "sqlite":
+        return
+
+    required_columns = {
+        "watchlist": "TEXT NOT NULL DEFAULT '[]'",
+        "theme": "VARCHAR(20) NOT NULL DEFAULT 'light'",
+        "notifications": "BOOLEAN NOT NULL DEFAULT 1",
+        "two_factor_enabled": "BOOLEAN NOT NULL DEFAULT 0",
+        "two_factor_secret": "VARCHAR(255)",
+        "last_login": "DATETIME",
+        "login_attempts": "INTEGER NOT NULL DEFAULT 0",
+        "locked_until": "DATETIME",
+    }
+
+    with engine.begin() as conn:
+        existing_cols = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(users)")).fetchall()
+        }
+        for col, ddl in required_columns.items():
+            if col not in existing_cols:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {ddl}"))
+
+
+_ensure_sqlite_user_columns()
 
 
 def get_db():

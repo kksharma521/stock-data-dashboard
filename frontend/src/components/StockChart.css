@@ -58,6 +58,16 @@
   border-color: #0f4ca8;
 }
 
+.active-range-label {
+  border: 1px solid #d6deea;
+  background: #f9fbff;
+  color: #203553;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .chart-container-professional {
   border: 1px solid #e1e7f0;
   border-radius: 10px;
