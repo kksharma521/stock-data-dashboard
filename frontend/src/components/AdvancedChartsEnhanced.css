@@ -1,0 +1,67 @@
+.apex-chart-wrapper {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+  border: 1px solid #e8eef7;
+  overflow: hidden;
+  user-select: none;
+}
+
+.apex-chart-wrapper svg {
+  max-width: 100% !important;
+}
+
+/* ApexCharts Custom Styling */
+.apexcharts-toolbar {
+  padding: 10px 15px !important;
+  background: #f7fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.apexcharts-menu-icon {
+  color: #667eea !important;
+}
+
+.apexcharts-menu-icon:hover {
+  color: #764ba2 !important;
+}
+
+.apexcharts-tooltip {
+  background: #2d3748 !important;
+  border-radius: 8px !important;
+  padding: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+.apexcharts-tooltip-text {
+  color: white !important;
+  font-size: 12px !important;
+}
+
+.apexcharts-legend {
+  padding: 0 20px !important;
+  margin-top: 15px !important;
+}
+
+.apexcharts-legend-series {
+  margin-right: 20px !important;
+}
+
+.apexcharts-legend-marker {
+  margin-right: 8px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .apex-chart-wrapper {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .apexcharts-toolbar {
+    padding: 8px 12px !important;
+  }
+}

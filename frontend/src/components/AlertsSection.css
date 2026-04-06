@@ -1,0 +1,138 @@
+.alerts-section {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.alerts-section.loading,
+.alerts-section.error,
+.alerts-section.empty {
+  padding: 30px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  color: #718096;
+  font-size: 14px;
+  border: 2px dashed #e2e8f0;
+}
+
+.alerts-section.error {
+  color: #ef4444;
+  border-color: #fed7d7;
+  background: #fff5f5;
+}
+
+.alerts-section h3 {
+  font-size: 18px;
+  color: #2d3748;
+  margin-bottom: 16px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.alerts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.alert-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.alert-card:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.alert-card.success {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.alert-card.warning {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.alert-card.alert {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.alert-card.info {
+  border-left-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.alert-icon {
+  font-size: 24px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content h4 {
+  margin: 0 0 4px 0;
+  color: #2d3748;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.alert-content p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1024px) {
+  .alerts-container {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .alerts-section {
+    margin-top: 16px;
+    margin-bottom: 20px;
+  }
+
+  .alerts-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .alerts-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .alert-card {
+    padding: 12px;
+  }
+
+  .alert-icon {
+    font-size: 20px;
+  }
+
+  .alert-content h4 {
+    font-size: 12px;
+  }
+
+  .alert-content p {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,105 @@
+.chartjs-wrapper {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+  border: 1px solid #e8eef7;
+  position: relative;
+  user-select: none;
+}
+
+.chartjs-wrapper canvas {
+  max-width: 100% !important;
+}
+
+.price-distribution-chart {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+  border: 1px solid #e8eef7;
+  user-select: none;
+}
+
+.price-distribution-chart h4 {
+  margin: 0 0 20px 0;
+  color: #2d3748;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.stat {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef7 100%);
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat .label {
+  font-size: 11px;
+  color: #718096;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.stat .value {
+  font-size: 18px;
+  color: #2d3748;
+  font-weight: 700;
+}
+
+/* Chart.js Tooltip Styling */
+.chartjs-tooltip {
+  opacity: 1;
+  position: absolute;
+  background: rgba(45, 55, 72, 0.95);
+  color: white;
+  border-radius: 8px;
+  color: white;
+  padding: 12px;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  transition: all 200ms ease;
+  font-size: 12px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chartjs-wrapper,
+  .price-distribution-chart {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat {
+    padding: 12px;
+  }
+
+  .stat .label {
+    font-size: 10px;
+  }
+
+  .stat .value {
+    font-size: 16px;
+  }
+}

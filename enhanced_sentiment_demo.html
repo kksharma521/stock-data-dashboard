@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Dashboard - Enhanced Sentiment Analysis Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .loading-insights {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .insights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .insights-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .stock-symbol {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .insight-notification {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .insight-notification:hover {
+            transform: translateY(-2px);
+        }
+
+        .insight-notification.positive {
+            border-left: 4px solid #10b981;
+        }
+
+        .insight-notification.negative {
+            border-left: 4px solid #ef4444;
+        }
+
+        .insight-notification.neutral {
+            border-left: 4px solid #6b7280;
+        }
+
+        .sentiment-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .sentiment-icon {
+            font-size: 32px;
+            margin-bottom: 5px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .sentiment-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .confidence-bar {
+            width: 60px;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .insight-notification.negative .confidence-fill {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .insight-notification.neutral .confidence-fill {
+            background: linear-gradient(90deg, #6b7280, #9ca3af);
+        }
+
+        .confidence-text {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            color: #1f2937;
+        }
+
+        .insight-text {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .insight-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .source {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .timestamp {
+            color: #9ca3af;
+        }
+
+        .type-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .type-badge.news {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .type-badge.social {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .navigation button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .navigation button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .insights-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .auto-refresh {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .features h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .features li:last-child {
+            border-bottom: none;
+        }
+
+        .features li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🚀 Enhanced Stock Dashboard</h1>
+        <p class="subtitle">Professional Sentiment Analysis During Loading States</p>
+
+        <!-- Loading Insights Component Demo -->
+        <div class="loading-insights">
+            <div class="insights-header">
+                <h3>Market Sentiment Analysis</h3>
+                <span class="stock-symbol">AAPL</span>
+            </div>
+
+            <!-- Positive Insight -->
+            <div class="insight-notification positive">
+                <div class="sentiment-indicator">
+                    <div class="sentiment-icon">📈</div>
+                    <div class="sentiment-label">POSITIVE</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 85%"></div>
+                    </div>
+                    <span class="confidence-text">85%</span>
+                </div>
+                <div class="content">
+                    <p class="insight-text">AAPL stock surges 5% after strong quarterly earnings report with revenue growth exceeding analyst estimates.</p>
+                    <div class="insight-meta">
+                        <span class="source">Financial Times</span>
+                        <span class="timestamp">2:45 PM</span>
+                        <span class="type-badge news">news</span>
+                    </div>
+                </div>
+                <div class="navigation">
+                    <button>Next (1/3)</button>
+                </div>
+            </div>
+
+            <!-- Neutral Insight -->
+            <div class="insight-notification neutral">
+                <div class="sentiment-indicator">
+                    <div class="sentiment-icon">➡️</div>
+                    <div class="sentiment-label">NEUTRAL</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 72%"></div>
+                    </div>
+                    <span class="confidence-text">72%</span>
+                </div>
+                <div class="content">
+                    <p class="insight-text">Market sentiment on AAPL remains cautiously optimistic with moderate volatility expected.</p>
+                    <div class="insight-meta">
+                        <span class="source">CNBC</span>
+                        <span class="timestamp">1:30 PM</span>
+                        <span class="type-badge news">news</span>
+                    </div>
+                </div>
+                <div class="navigation">
+                    <button>Next (2/3)</button>
+                </div>
+            </div>
+
+            <!-- Negative Insight -->
+            <div class="insight-notification negative">
+                <div class="sentiment-indicator">
+                    <div class="sentiment-icon">📉</div>
+                    <div class="sentiment-label">NEGATIVE</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 68%"></div>
+                    </div>
+                    <span class="confidence-text">68%</span>
+                </div>
+                <div class="content">
+                    <p class="insight-text">AAPL faces supply chain challenges that could impact Q2 production and delivery timelines.</p>
+                    <div class="insight-meta">
+                        <span class="source">Reuters</span>
+                        <span class="timestamp">12:15 PM</span>
+                        <span class="type-badge news">news</span>
+                    </div>
+                </div>
+                <div class="navigation">
+                    <button>Next (3/3)</button>
+                </div>
+            </div>
+
+            <div class="insights-footer">
+                <button class="refresh-btn">🔄 Refresh Analysis</button>
+                <span class="auto-refresh">Auto-refresh: 10s</span>
+            </div>
+        </div>
+
+        <div class="features">
+            <h2>✨ Enhanced Features</h2>
+            <ul>
+                <li><strong>Advanced Sentiment Analysis:</strong> Sophisticated ML-powered analysis with confidence scoring</li>
+                <li><strong>Real-time Data Simulation:</strong> Professional mock data mimicking real news and social media</li>
+                <li><strong>Visual Confidence Indicators:</strong> Progress bars showing analysis confidence levels</li>
+                <li><strong>Multi-source Integration:</strong> News, social media, and analysis data combined</li>
+                <li><strong>Auto-refresh System:</strong> Automatic updates every 10 seconds with manual refresh option</li>
+                <li><strong>Professional UI:</strong> Modern glassmorphism design with smooth animations</li>
+                <li><strong>Responsive Design:</strong> Optimized for all screen sizes</li>
+                <li><strong>Contextual Insights:</strong> Analysis directly relevant to selected stock symbol</li>
+            </ul>
+        </div>
+
+        <p style="text-align: center; margin-top: 30px; opacity: 0.8;">
+            <strong>Ready for Production:</strong> Replace mock data with real API integrations (NewsAPI, Twitter API) for live sentiment analysis.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,269 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f7fa;
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f5 100%);
+}
+
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #666;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.app-main {
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 30px 20px;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 25px;
+  min-height: calc(100vh - 220px);
+}
+
+.sidebar {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  height: fit-content;
+  position: sticky;
+  top: 120px;
+  border: 1px solid #e8eef7;
+}
+
+.content {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow-y: visible;
+}
+
+.compare-layout {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  border: 1px solid #e8eef7;
+}
+
+.topstocks-layout {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8eef7;
+  overflow: hidden;
+}
+
+.userpanel-layout {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  border: 1px solid #e8eef7;
+}
+
+.settings-layout {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  border: 1px solid #e8eef7;
+}
+
+.settings-content h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.settings-content p {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.app-footer {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 60px;
+  border-top: 1px solid #4a5568;
+}
+
+.app-footer p {
+  margin: 0;
+  color: #cbd5e0;
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-main > * {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.topstocks-layout,
+.compare-layout,
+.userpanel-layout,
+.settings-layout,
+.watchlist-layout,
+.portfolio-layout,
+.alerts-layout,
+.news-layout,
+.analytics-layout {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  border: 1px solid #e8eef7;
+}
+
+.settings-content,
+.watchlist-content,
+.portfolio-content,
+.alerts-content,
+.news-content,
+.analytics-content {
+  text-align: center;
+}
+
+.settings-content h2,
+.watchlist-content h2,
+.portfolio-content h2,
+.alerts-content h2,
+.news-content h2,
+.analytics-content h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.settings-content p,
+.watchlist-content p,
+.portfolio-content p,
+.alerts-content p,
+.news-content p,
+.analytics-content p {
+  color: #7f8c8d;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 180px 1fr;
+    gap: 20px;
+  }
+
+  .sidebar {
+    padding: 20px;
+  }
+
+  .topstocks-layout,
+  .compare-layout,
+  .userpanel-layout,
+  .settings-layout,
+  .watchlist-layout,
+  .portfolio-layout,
+  .alerts-layout,
+  .news-layout,
+  .analytics-layout {
+    padding: 25px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .sidebar {
+    position: static;
+    sticky: unset;
+  }
+
+  .app-main {
+    padding: 15px 10px;
+  }
+
+  .topstocks-layout,
+  .compare-layout,
+  .userpanel-layout,
+  .settings-layout,
+  .watchlist-layout,
+  .portfolio-layout,
+  .alerts-layout,
+  .news-layout,
+  .analytics-layout {
+    padding: 20px;
+  }
+
+  .app-footer {
+    padding: 20px 15px;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main {
+    padding: 10px;
+  }
+
+  .topstocks-layout,
+  .compare-layout,
+  .userpanel-layout,
+  .settings-layout,
+  .watchlist-layout,
+  .portfolio-layout,
+  .alerts-layout,
+  .news-layout,
+  .analytics-layout {
+    padding: 15px;
+  }
+}

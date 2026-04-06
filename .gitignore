@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 .vscode/
 .env
+
+# Local build and dependency artifacts
+frontend/node_modules/
+stock_dashboard.db
+*.db

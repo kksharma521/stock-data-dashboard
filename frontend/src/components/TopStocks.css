@@ -1,0 +1,203 @@
+.top-stocks {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.top-stocks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 20px;
+}
+
+.top-stocks-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 2rem;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: 2px solid #3498db;
+  background: white;
+  color: #3498db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background: #f8f9fa;
+}
+
+.tab-button.active {
+  background: #3498db;
+  color: white;
+}
+
+.top-stocks-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.top-stocks-table h3 {
+  margin: 0;
+  padding: 20px;
+  background: #f8f9fa;
+  color: #2c3e50;
+  font-size: 1.4rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f8f9fa;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  font-size: 0.9rem;
+}
+
+.rank {
+  font-weight: bold;
+  color: #7f8c8d;
+  width: 60px;
+}
+
+.symbol {
+  font-weight: bold;
+  color: #3498db;
+  font-family: 'Courier New', monospace;
+}
+
+.name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market {
+  font-size: 0.8rem;
+  background: #ecf0f1;
+  color: #7f8c8d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 50px;
+}
+
+.price {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.change {
+  font-weight: 500;
+}
+
+.change-pct {
+  font-weight: 600;
+}
+
+.positive {
+  color: #27ae60;
+}
+
+.negative {
+  color: #e74c3c;
+}
+
+.volatility, .sharpe, .drawdown, .score {
+  font-family: 'Courier New', monospace;
+}
+
+tbody tr:hover {
+  background: #f8f9fa;
+}
+
+tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.top-stocks-loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+.top-stocks-error {
+  text-align: center;
+  padding: 50px;
+  color: #e74c3c;
+}
+
+.top-stocks-error button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.top-stocks-error button:hover {
+  background: #2980b9;
+}
+
+@media (max-width: 768px) {
+  .top-stocks-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .tab-buttons {
+    justify-content: center;
+  }
+
+  th, td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .name {
+    max-width: 150px;
+  }
+}

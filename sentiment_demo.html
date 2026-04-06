@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Dashboard - Sentiment Analysis Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .loading-insights {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .insight-notification {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sentiment {
+            font-size: 24px;
+        }
+        .content {
+            flex: 1;
+        }
+        .content p {
+            margin: 0;
+            font-size: 14px;
+        }
+        .content small {
+            color: #666;
+        }
+        .refresh-btn {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .refresh-btn:hover {
+            background-color: #0056b3;
+        }
+        .loading-text {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Dashboard - Sentiment Analysis Feature</h1>
+    <p>This demonstrates the new sentiment analysis component that appears above loading windows.</p>
+
+    <h2>Loading State with Sentiment Analysis:</h2>
+
+    <div class="loading-insights">
+        <div class="insight-notification">
+            <div class="sentiment">😊</div>
+            <div class="content">
+                <p>Apple stock shows positive momentum with recent earnings beat expectations...</p>
+                <small>Source: News</small>
+            </div>
+            <button>Next</button>
+        </div>
+        <button class="refresh-btn">Refresh</button>
+    </div>
+
+    <div class="loading-text">⏳ Loading data...</div>
+
+    <h2>Features:</h2>
+    <ul>
+        <li>Real-time sentiment analysis from news and social media</li>
+        <li>ML-powered analysis categorizing content as positive, neutral, or negative</li>
+        <li>Auto-refresh every 10 seconds</li>
+        <li>Manual navigation through insights</li>
+        <li>Directly relevant to user's stock query</li>
+    </ul>
+
+    <p><strong>Note:</strong> This is a demonstration. The actual feature integrates with NewsAPI and Twitter API for real-time data.</p>
+</body>
+</html>
