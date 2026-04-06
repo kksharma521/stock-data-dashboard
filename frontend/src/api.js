@@ -175,7 +175,7 @@ export const stockAPI = {
   // Get top 10 earning stocks
   getTopEarners: async () => {
     try {
-      const response = await fetch(`${API_BASE}/top/earners`);
+      const response = await fetchWithTimeout(`${API_BASE}/top/earners`, {}, 30000);
       if (!response.ok) throw new Error('Failed to fetch top earners');
       return await response.json();
     } catch (error) {
@@ -202,7 +202,7 @@ export const stockAPI = {
   // Get top 10 long-term investment stocks
   getTopLongTerm: async () => {
     try {
-      const response = await fetch(`${API_BASE}/top/long-term`);
+      const response = await fetchWithTimeout(`${API_BASE}/top/long-term`, {}, 30000);
       if (!response.ok) throw new Error('Failed to fetch long-term stocks');
       return await response.json();
     } catch (error) {
@@ -229,7 +229,7 @@ export const stockAPI = {
   // Get top 10 best stocks of the day
   getTopDailyStocks: async () => {
     try {
-      const response = await fetch(`${API_BASE}/top/daily`);
+      const response = await fetchWithTimeout(`${API_BASE}/top/daily`, {}, 30000);
       if (!response.ok) throw new Error('Failed to fetch daily top stocks');
       return await response.json();
     } catch (error) {

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../authAPI';
 import './AuthPages.css';
+
+const TURNSTILE_TEST_SITE_KEY = '1x00000000000000000000AA';
 
 function Signup() {
   const [formData, setFormData] = useState({
@@ -10,29 +12,84 @@ function Signup() {
     fullName: '',
     password: '',
     confirmPassword: '',
-    captchaAnswer: '',
     enable2FA: false,
   });
-  const [captchaData, setCaptchaData] = useState(null);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState(TURNSTILE_TEST_SITE_KEY);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, issues: [], strength: 'Very Weak' });
   const [twoFactorSetup, setTwoFactorSetup] = useState(null);
+
+  const turnstileContainerRef = useRef(null);
+  const turnstileWidgetIdRef = useRef(null);
   const navigate = useNavigate();
 
-  // ✅ Load stock market CAPTCHA on mount
   useEffect(() => {
-    loadCaptcha();
+    const fetchSiteKey = async () => {
+      try {
+        const response = await authAPI.getTurnstileSiteKey();
+        if (response?.site_key) {
+          setTurnstileSiteKey(response.site_key);
+        }
+      } catch (e) {
+        // Fall back to Cloudflare test key.
+        setTurnstileSiteKey(TURNSTILE_TEST_SITE_KEY);
+      }
+    };
+
+    fetchSiteKey();
   }, []);
 
-  const loadCaptcha = async () => {
-    try {
-      const response = await authAPI.getCaptcha();
-      setCaptchaData(response);
-    } catch (err) {
-      console.error('Failed to load CAPTCHA:', err);
-      setError('Failed to load security question. Please refresh the page.');
+  useEffect(() => {
+    const renderTurnstile = () => {
+      if (!window.turnstile || !turnstileContainerRef.current) {
+        return;
+      }
+
+      if (turnstileWidgetIdRef.current !== null) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+        turnstileWidgetIdRef.current = null;
+      }
+
+      turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+        sitekey: turnstileSiteKey,
+        theme: 'light',
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      });
+    };
+
+    const scriptId = 'cf-turnstile-script';
+    const existingScript = document.getElementById(scriptId);
+
+    if (existingScript) {
+      renderTurnstile();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.onload = renderTurnstile;
+    document.head.appendChild(script);
+
+    return () => {
+      if (window.turnstile && turnstileWidgetIdRef.current !== null) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, [turnstileSiteKey]);
+
+  const resetTurnstile = () => {
+    setTurnstileToken('');
+    if (window.turnstile && turnstileWidgetIdRef.current !== null) {
+      window.turnstile.reset(turnstileWidgetIdRef.current);
     }
   };
 
@@ -40,19 +97,17 @@ function Signup() {
     const issues = [];
     let score = 0;
 
-    // Length check
     if (password.length < 12) {
       issues.push('Min 12 characters');
     } else {
       score += 1;
     }
 
-    // Character variety
     const checks = [
       { regex: /[a-z]/, desc: 'lowercase', points: 1 },
       { regex: /[A-Z]/, desc: 'uppercase', points: 1 },
       { regex: /\d/, desc: 'numbers', points: 1 },
-      { regex: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/, desc: 'special chars', points: 2 }
+      { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, desc: 'special chars', points: 2 }
     ];
 
     checks.forEach(({ regex, desc, points }) => {
@@ -63,14 +118,12 @@ function Signup() {
       }
     });
 
-    // Dictionary words check
-    const commonWords = ["password", "123456", "qwerty", "admin", "user", "login"];
-    if (commonWords.some(word => password.toLowerCase().includes(word))) {
+    const commonWords = ['password', '123456', 'qwerty', 'admin', 'user', 'login'];
+    if (commonWords.some((word) => password.toLowerCase().includes(word))) {
       issues.push('Avoid common words');
       score = Math.max(0, score - 1);
     }
 
-    // Sequential characters
     if (/(.)\1{2,}/.test(password)) {
       issues.push('Avoid repeated chars');
       score = Math.max(0, score - 1);
@@ -78,15 +131,14 @@ function Signup() {
 
     const strengthLevels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
     const strength = strengthLevels[Math.min(score, 4)] || 'Very Weak';
-
     setPasswordStrength({ score: Math.max(0, score), issues, strength });
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
 
     if (name === 'password') {
@@ -99,9 +151,7 @@ function Signup() {
     setError('');
     setTwoFactorSetup(null);
 
-    // Validation
-    if (!formData.email || !formData.username || !formData.fullName ||
-        !formData.password || !formData.confirmPassword || !formData.captchaAnswer) {
+    if (!formData.email || !formData.username || !formData.fullName || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -116,6 +166,11 @@ function Signup() {
       return;
     }
 
+    if (!turnstileToken) {
+      setError('Please complete Turnstile verification.');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await authAPI.signup(
@@ -124,30 +179,28 @@ function Signup() {
         formData.password,
         formData.confirmPassword,
         formData.fullName,
-        formData.captchaAnswer,
-        captchaData.captcha_id,
-        formData.enable2FA
+        null,
+        null,
+        formData.enable2FA,
+        turnstileToken
       );
 
-      // Store tokens
       localStorage.setItem('token', response.access_token);
       localStorage.setItem('refreshToken', response.refresh_token);
       localStorage.setItem('user', JSON.stringify(response.user));
 
-      // Handle 2FA setup if enabled
       if (response.totp_secret) {
         setTwoFactorSetup({
           secret: response.totp_secret,
-          message: response.message
+          message: response.message,
         });
-        return; // Don't navigate yet
+        return;
       }
 
-      // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Signup failed');
-      loadCaptcha(); // Reload CAPTCHA on error
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -159,12 +212,9 @@ function Signup() {
       const token = localStorage.getItem('token');
       await authAPI.setup2FA(token, true, totpCode);
 
-      // Update user data
       const user = JSON.parse(localStorage.getItem('user'));
       user.two_factor_enabled = true;
       localStorage.setItem('user', JSON.stringify(user));
-
-      // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to enable 2FA: ' + err.message);
@@ -178,13 +228,13 @@ function Signup() {
       <div className="auth-container">
         <div className="auth-box auth-box-large">
           <div className="auth-header">
-            <h1>🔐 Two-Factor Authentication Setup</h1>
+            <h1>Two-Factor Authentication Setup</h1>
             <p>Set up 2FA to secure your account</p>
           </div>
 
           <div className="two-factor-setup">
             <div className="setup-instructions">
-              <h3>📱 Setup Instructions:</h3>
+              <h3>Setup Instructions:</h3>
               <ol>
                 <li>Install an authenticator app (Google Authenticator, Authy, etc.)</li>
                 <li>Scan the QR code or enter this secret manually:</li>
@@ -195,11 +245,7 @@ function Signup() {
 
             <TwoFactorForm onSubmit={handle2FASetup} loading={loading} />
 
-            <button
-              type="button"
-              className="auth-button secondary"
-              onClick={() => navigate('/dashboard')}
-            >
+            <button type="button" className="auth-button secondary" onClick={() => navigate('/dashboard')}>
               Skip for Now (Less Secure)
             </button>
           </div>
@@ -212,7 +258,7 @@ function Signup() {
     <div className="auth-container">
       <div className="auth-box auth-box-large">
         <div className="auth-header">
-          <h1>📊 Stock Dashboard</h1>
+          <h1>Stock Dashboard</h1>
           <p>Create Your Account</p>
         </div>
 
@@ -221,38 +267,17 @@ function Signup() {
         <form onSubmit={handleSignup} className="auth-form">
           <div className="form-group">
             <label>Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="John Doe"
-              disabled={loading}
-            />
+            <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="John Doe" disabled={loading} />
           </div>
 
           <div className="form-group">
             <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="your@email.com"
-              disabled={loading}
-            />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="your@email.com" disabled={loading} />
           </div>
 
           <div className="form-group">
             <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="johndoe"
-              disabled={loading}
-            />
+            <input type="text" name="username" value={formData.username} onChange={handleChange} placeholder="johndoe" disabled={loading} />
           </div>
 
           <div className="form-group">
@@ -268,21 +293,17 @@ function Signup() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder="........"
                 disabled={loading}
               />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? '🙈' : '👁️'}
+              <button type="button" className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
             {passwordStrength.issues.length > 0 && (
               <div className="password-issues">
                 {passwordStrength.issues.map((issue, i) => (
-                  <span key={i}>• {issue}</span>
+                  <span key={i}>- {issue}</span>
                 ))}
               </div>
             )}
@@ -295,67 +316,33 @@ function Signup() {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="••••••••"
+              placeholder="........"
               disabled={loading}
             />
           </div>
 
           <div className="form-group captcha-group">
-            <label>Stock Market Security Question</label>
-            {captchaData ? (
-              <div className="stock-captcha">
-                <div className="captcha-question">{captchaData.question}</div>
-                <button
-                  type="button"
-                  className="captcha-refresh"
-                  onClick={loadCaptcha}
-                  disabled={loading}
-                >
-                  🔄 New Question
-                </button>
-              </div>
-            ) : (
-              <div className="captcha-loading">Loading security question...</div>
-            )}
-            <input
-              type="text"
-              name="captchaAnswer"
-              value={formData.captchaAnswer}
-              onChange={handleChange}
-              placeholder="Your answer"
-              disabled={loading || !captchaData}
-            />
+            <div className="stock-captcha turnstile-theme">
+              <div ref={turnstileContainerRef} className="turnstile-widget" />
+            </div>
           </div>
 
           <div className="form-group checkbox-group">
             <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="enable2FA"
-                checked={formData.enable2FA}
-                onChange={handleChange}
-                disabled={loading}
-              />
+              <input type="checkbox" name="enable2FA" checked={formData.enable2FA} onChange={handleChange} disabled={loading} />
               <span className="checkmark"></span>
               Enable Two-Factor Authentication (Recommended)
             </label>
           </div>
 
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading || !captchaData}
-          >
-            {loading ? '⏳ Creating Account...' : '✓ Sign Up'}
+          <button type="submit" className="auth-button" disabled={loading || !turnstileToken}>
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
-            Already have an account?{' '}
-            <Link to="/login" className="auth-link">
-              Sign In
-            </Link>
+            Already have an account? <Link to="/login" className="auth-link">Sign In</Link>
           </p>
         </div>
       </div>
@@ -363,7 +350,6 @@ function Signup() {
   );
 }
 
-// ✅ 2FA Setup Form Component
 function TwoFactorForm({ onSubmit, loading }) {
   const [totpCode, setTotpCode] = useState('');
 
@@ -388,12 +374,8 @@ function TwoFactorForm({ onSubmit, loading }) {
           autoFocus
         />
       </div>
-      <button
-        type="submit"
-        className="auth-button"
-        disabled={loading || totpCode.length !== 6}
-      >
-        {loading ? '⏳ Enabling 2FA...' : '✓ Enable 2FA'}
+      <button type="submit" className="auth-button" disabled={loading || totpCode.length !== 6}>
+        {loading ? 'Enabling 2FA...' : 'Enable 2FA'}
       </button>
     </form>
   );

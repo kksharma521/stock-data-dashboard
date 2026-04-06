@@ -148,52 +148,47 @@ def check_rate_limit(identifier: str, max_requests: int = 5, window_seconds: int
 
 
 def generate_stock_captcha() -> dict:
-    """Generate stock market oriented CAPTCHA"""
-    stock_terms = [
-        "BULL", "BEAR", "IPO", "ETF", "NYSE", "NASDAQ", "DOW", "SP500",
-        "AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX",
-        "LONG", "SHORT", "BUY", "SELL", "HOLD", "GAIN", "LOSS", "TREND",
-        "VOLATILE", "STABLE", "DIVIDEND", "SPLIT", "MERGER", "ACQUIRE"
+    """Generate a simple stock-market CAPTCHA question."""
+    question_bank = [
+        {
+            "question": "Which market term means prices are rising? (bull or bear)",
+            "answer": "BULL"
+        },
+        {
+            "question": "Which market term means prices are falling? (bull or bear)",
+            "answer": "BEAR"
+        },
+        {
+            "question": "What is the ticker symbol for Apple? (AAPL/MSFT)",
+            "answer": "AAPL"
+        },
+        {
+            "question": "What is the ticker symbol for Microsoft? (MSFT/TSLA)",
+            "answer": "MSFT"
+        },
+        {
+            "question": "If a stock goes up, is that a gain or a loss?",
+            "answer": "GAIN"
+        },
+        {
+            "question": "If a stock goes down, is that a gain or a loss?",
+            "answer": "LOSS"
+        },
     ]
 
-    # Generate 2-3 stock terms
-    num_terms = random.randint(2, 3)
-    selected_terms = random.sample(stock_terms, num_terms)
-
-    # Create question
-    operations = ["+", "-", "*", "SUM", "DIFF"]
-    operation = random.choice(operations)
-
-    if operation == "+":
-        question = f"{selected_terms[0]} + {selected_terms[1]}"
-        answer = selected_terms[0] + selected_terms[1]
-    elif operation == "-":
-        question = f"{selected_terms[0]} - {selected_terms[1]}"
-        answer = selected_terms[0] + selected_terms[1]  # Concat for strings
-    elif operation == "*":
-        question = f"{selected_terms[0]} * {selected_terms[1]}"
-        answer = selected_terms[0] + selected_terms[1]  # Concat for strings
-    elif operation == "SUM":
-        question = f"SUM of {selected_terms[0]} and {selected_terms[1]}"
-        answer = selected_terms[0] + selected_terms[1]
-    else:  # DIFF
-        question = f"Combine {selected_terms[0]} and {selected_terms[1]}"
-        answer = selected_terms[0] + selected_terms[1]
-
-    if num_terms == 3:
-        question += f" + {selected_terms[2]}"
-        answer += selected_terms[2]
-
+    selected = random.choice(question_bank)
     return {
-        "question": question,
-        "answer": answer.upper(),
-        "terms": selected_terms
+        "question": selected["question"],
+        "answer": selected["answer"].upper(),
+        "terms": []
     }
 
 
 def verify_stock_captcha(user_input: str, correct_answer: str) -> bool:
-    """Verify stock market CAPTCHA"""
-    return user_input.upper().replace(" ", "") == correct_answer.replace(" ", "")
+    """Verify simple stock market CAPTCHA answer."""
+    normalized_input = user_input.upper().strip()
+    normalized_answer = correct_answer.upper().strip()
+    return normalized_input == normalized_answer
 
 
 def generate_totp_secret() -> str:

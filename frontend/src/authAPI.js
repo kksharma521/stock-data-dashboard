@@ -1,188 +1,113 @@
-import axios from 'axios';
+const AUTH_API_BASE = process.env.REACT_APP_AUTH_API_BASE || 'http://localhost:8080/api';
+const AUTH_BASE = `${AUTH_API_BASE}/auth`;
 
-const API_BASE = 'http://localhost:8000';
-
-// ✅ Enhanced Auth API with advanced security
 export const authAPI = {
-  // Get stock market CAPTCHA
-  getCaptcha: async () => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/captcha`);
-      if (!response.ok) throw new Error('Failed to fetch CAPTCHA');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching CAPTCHA:', error);
-      throw error;
+  getTurnstileSiteKey: async () => {
+    const response = await fetch(`${AUTH_BASE}/turnstile/sitekey`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch Turnstile site key');
     }
+    return response.json();
   },
 
-  // Enhanced signup with 2FA option
-  signup: async (email, username, password, confirmPassword, fullName, captchaAnswer, captchaId, enable2FA = false) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          username,
-          password,
-          confirm_password: confirmPassword,
-          full_name: fullName,
-          captcha_answer: captchaAnswer,
-          captcha_id: captchaId,
-          enable_2fa: enable2FA,
-        }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Signup failed');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
+  signup: async (
+    email,
+    username,
+    password,
+    confirmPassword,
+    fullName,
+    captchaAnswer = null,
+    captchaId = null,
+    enable2FA = false,
+    turnstileToken = null
+  ) => {
+    const response = await fetch(`${AUTH_BASE}/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        fullName,
+        username,
+        password,
+        confirmPassword,
+        roles: ['USER'],
+        turnstileToken,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || err.detail || 'Signup failed');
     }
+
+    // Auto-login after signup for existing UI behavior.
+    return authAPI.login(username, password);
   },
 
-  // Enhanced login with 2FA support
-  login: async (email, password, totpCode = null) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          totp_code: totpCode,
-        }),
-      });
+  login: async (username, password, totpCode = null) => {
+    const response = await fetch(`${AUTH_BASE}/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Login failed');
-      }
-
-      const data = await response.json();
-
-      // Handle 2FA requirement
-      if (data.requires_2fa) {
-        return {
-          requires_2fa: true,
-          user_id: data.user_id,
-          message: data.message
-        };
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error logging in:', error);
-      throw error;
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || err.detail || 'Login failed');
     }
+
+    const data = await response.json();
+    return {
+      access_token: data.accessToken,
+      refresh_token: '',
+      token_type: (data.tokenType || 'Bearer').toLowerCase(),
+      user: {
+        username: data.username,
+        email: data.username,
+        full_name: data.username,
+        roles: data.roles || ['USER'],
+        two_factor_enabled: false,
+      },
+    };
   },
 
-  // Refresh access token
   refreshToken: async (refreshToken) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-      if (!response.ok) throw new Error('Failed to refresh token');
-      return await response.json();
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      throw error;
-    }
+    throw new Error('Refresh token endpoint is not enabled in this auth service');
   },
 
-  // Setup 2FA
   setup2FA: async (token, enable, totpCode = null) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/2fa/setup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          enable,
-          totp_code: totpCode,
-        }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || '2FA setup failed');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error setting up 2FA:', error);
-      throw error;
-    }
+    throw new Error('2FA setup is not enabled in this auth service');
   },
 
-  // Get profile with security info
   getProfile: async (token) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch profile');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Fallback user profile data
-      return {
-        id: 1,
-        email: 'user@example.com',
-        username: 'user',
-        full_name: 'User Profile',
-        watchlist: [],
-        theme: 'light',
-        notifications: true,
-        created_at: new Date().toISOString(),
-        two_factor_enabled: false
-      };
+    const response = await fetch(`${AUTH_API_BASE}/user/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch profile');
     }
+
+    const data = await response.json();
+    return {
+      id: 1,
+      email: data.username,
+      username: data.username,
+      full_name: data.username,
+      watchlist: [],
+      theme: 'light',
+      notifications: true,
+      created_at: new Date().toISOString(),
+      two_factor_enabled: false,
+      roles: data.roles || ['USER'],
+    };
   },
 
-  // Add to watchlist
   addToWatchlist: async (token, symbol) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/watchlist/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ symbol, action: 'add' }),
-      });
-      if (!response.ok) throw new Error('Failed to add to watchlist');
-      return await response.json();
-    } catch (error) {
-      console.error('Error adding to watchlist:', error);
-      throw error;
-    }
+    throw new Error('Watchlist endpoints are not part of this auth service');
   },
 
-  // Remove from watchlist
   removeFromWatchlist: async (token, symbol) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/watchlist/remove`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ symbol, action: 'remove' }),
-      });
-      if (!response.ok) throw new Error('Failed to remove from watchlist');
-      return await response.json();
-    } catch (error) {
-      console.error('Error removing from watchlist:', error);
-      throw error;
-    }
+    throw new Error('Watchlist endpoints are not part of this auth service');
   },
 };

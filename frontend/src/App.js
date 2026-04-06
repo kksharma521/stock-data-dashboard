@@ -85,11 +85,11 @@ function Dashboard() {
 
       <main className="app-main">
         {activeTab === 'dashboard' && (
-          <div className="dashboard-layout">
-            <aside className="sidebar">
+          <div className="dashboard-shell">
+            <aside className="dashboard-sidebar">
               <StockList onSelectStock={setSelectedStock} selectedSymbol={selectedStock} />
             </aside>
-            <section className="content">
+            <section className="dashboard-main-content">
               <StockDetail company={selectedStock} />
             </section>
           </div>

@@ -1,5 +1,7 @@
 .stock-chart {
   margin-bottom: 40px;
+  width: 100%;
+  min-width: 0;
 }
 
 .chart-header {
@@ -35,6 +37,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   margin-bottom: 25px;
   border: 1px solid #e8eef7;
+  overflow: hidden;
 }
 
 .chart-group {
@@ -61,6 +64,7 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .chart-button {
@@ -78,6 +82,7 @@
   align-items: center;
   gap: 6px;
   user-select: none;
+  flex: 0 0 auto;
 }
 
 .chart-button:hover {
@@ -160,16 +165,17 @@
   font-weight: 700;
 }
 
-table {
+.chart-table table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
 }
 
-table thead {
+.chart-table table thead {
   background-color: #edf2f7;
 }
 
-table th {
+.chart-table table th {
   padding: 12px;
   text-align: left;
   font-weight: 600;
@@ -178,18 +184,18 @@ table th {
   border-bottom: 2px solid #e2e8f0;
 }
 
-table td {
+.chart-table table td {
   padding: 10px 12px;
   border-bottom: 1px solid #e2e8f0;
   color: #2d3748;
   font-size: 13px;
 }
 
-table tbody tr:hover {
+.chart-table table tbody tr:hover {
   background-color: #edf2f7;
 }
 
-table tbody tr:last-child td {
+.chart-table table tbody tr:last-child td {
   border-bottom: none;
 }
 
@@ -212,11 +218,14 @@ table tbody tr:last-child td {
   .chart-buttons {
     width: 100%;
     gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
   }
 
   .chart-button {
-    flex: 1;
-    min-width: 70px;
+    flex: 0 0 auto;
+    min-width: 96px;
     padding: 8px 10px;
     font-size: 11px;
   }

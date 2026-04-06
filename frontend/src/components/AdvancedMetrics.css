@@ -1,14 +1,18 @@
 .advanced-metrics {
   display: grid;
-  gap: 25px;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
 .metrics-section {
   background: white;
   border-radius: 12px;
-  padding: 25px;
+  padding: clamp(14px, 2vw, 24px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border-top: 4px solid #667eea;
+  width: 100%;
+  min-width: 0;
 }
 
 .metrics-section h3 {
@@ -21,20 +25,23 @@
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .metric-item {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 15px;
+  padding: 14px;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef7 100%);
   border-radius: 8px;
   transition: all 0.3s ease;
   border: 1px solid #e2e8f0;
   user-select: none;
+  min-width: 0;
 }
 
 .metric-item:hover {
@@ -56,6 +63,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 
 .metric-label {

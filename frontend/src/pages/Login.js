@@ -5,7 +5,7 @@ import './AuthPages.css';
 
 function Login() {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
     totpCode: '',
   });
@@ -25,7 +25,7 @@ function Login() {
     e.preventDefault();
     setError('');
 
-    if (!formData.email || !formData.password) {
+    if (!formData.username || !formData.password) {
       setError('Please fill in all fields');
       return;
     }
@@ -38,7 +38,7 @@ function Login() {
     try {
       setLoading(true);
       const response = await authAPI.login(
-        formData.email,
+        formData.username,
         formData.password,
         requires2FA ? formData.totpCode : null
       );
@@ -146,13 +146,13 @@ function Login() {
 
         <form onSubmit={handleLogin} className="auth-form">
           <div className="form-group">
-            <label>Email Address</label>
+            <label>Username</label>
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="your@email.com"
+              placeholder="your_username"
               disabled={loading}
             />
           </div>

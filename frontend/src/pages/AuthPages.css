@@ -241,21 +241,14 @@
 
 /* ✅ Stock Market CAPTCHA Styles */
 .stock-captcha {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .stock-captcha::before {
-  content: "📈";
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 20px;
-  opacity: 0.3;
+  content: none;
 }
 
 .captcha-question {
@@ -278,6 +271,25 @@
   text-align: center;
   color: #718096;
   font-style: italic;
+}
+
+.turnstile-theme {
+  display: block;
+  gap: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.turnstile-widget {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
 }
 
 /* ✅ 2FA Setup Styles */
@@ -346,11 +358,20 @@
 
 .checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   cursor: pointer;
   font-weight: 500;
   color: #2d3748;
   gap: 12px;
+  width: 100%;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.form-group .checkbox-label {
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -467,12 +488,17 @@
   }
 
   .stock-captcha {
-    padding: 12px;
+    padding: 0;
   }
 
   .captcha-question {
     font-size: 14px;
     padding: 10px 12px;
+  }
+
+  .checkbox-label {
+    font-size: 14px;
+    gap: 10px;
   }
 
   .setup-instructions {

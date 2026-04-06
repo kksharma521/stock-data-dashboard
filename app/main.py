@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException, Query, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+import os
+import requests
 from services import fetch_stock_data, compute_analysis, get_companies, is_market_open, get_stock_news, get_stock_alerts, get_top_earners, get_top_long_term, get_top_daily_stocks
 from database import SessionLocal, get_db, User, UserStock
 from auth import (
@@ -34,9 +36,10 @@ class SignupRequest(BaseModel):
     password: str
     confirm_password: str
     full_name: str
-    captcha_answer: str
-    captcha_id: str
+    captcha_answer: Optional[str] = None
+    captcha_id: Optional[str] = None
     enable_2fa: bool = False
+    turnstile_token: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
@@ -64,6 +67,33 @@ class WatchlistRequest(BaseModel):
 class TwoFactorSetup(BaseModel):
     enable: bool
     totp_code: Optional[str] = None
+
+
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA"
+TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA"
+
+
+def verify_turnstile_token(token: Optional[str], remote_ip: Optional[str] = None) -> bool:
+    """Verify Cloudflare Turnstile token server-side."""
+    if not token:
+        return False
+
+    secret_key = os.getenv("TURNSTILE_SECRET_KEY", TURNSTILE_TEST_SECRET)
+    payload = {
+        "secret": secret_key,
+        "response": token,
+    }
+    if remote_ip:
+        payload["remoteip"] = remote_ip
+
+    try:
+        response = requests.post(TURNSTILE_VERIFY_URL, data=payload, timeout=5)
+        response.raise_for_status()
+        result = response.json()
+        return bool(result.get("success"))
+    except Exception:
+        return False
 
 # ✅ Rate limiting middleware
 @app.middleware("http")
@@ -110,28 +140,39 @@ def get_stock_captcha():
         "message": "Solve this stock market puzzle"
     }
 
+
+@app.get("/auth/turnstile/sitekey")
+def get_turnstile_site_key():
+    """Return Turnstile site key for frontend widget rendering."""
+    return {"site_key": os.getenv("TURNSTILE_SITE_KEY", TURNSTILE_TEST_SITE_KEY)}
+
 # ✅ Enhanced signup endpoint with 2FA support
 @app.post("/auth/signup")
-def signup(request: SignupRequest, db = Depends(get_db)):
+def signup(signup_data: SignupRequest, req: Request, db=Depends(get_db)):
     """Register a new user with advanced security"""
     # Rate limiting check
-    if not check_rate_limit(f"signup_{request.email}", max_requests=3, window_seconds=3600):
+    if not check_rate_limit(f"signup_{signup_data.email}", max_requests=3, window_seconds=3600):
         raise HTTPException(
             status_code=429,
             detail="Too many signup attempts. Please try again later."
         )
 
     # Sanitize inputs
-    request.email = sanitize_input(request.email, 254)
-    request.username = sanitize_input(request.username, 50)
-    request.full_name = sanitize_input(request.full_name, 100)
+    signup_data.email = sanitize_input(signup_data.email, 254)
+    signup_data.username = sanitize_input(signup_data.username, 50)
+    signup_data.full_name = sanitize_input(signup_data.full_name, 100)
+
+    # Verify Cloudflare Turnstile
+    remote_ip = req.client.host if req.client else None
+    if not verify_turnstile_token(signup_data.turnstile_token, remote_ip):
+        raise HTTPException(status_code=400, detail="Turnstile verification failed")
 
     # Validate email
-    if not validate_email(request.email):
+    if not validate_email(signup_data.email):
         raise HTTPException(status_code=400, detail="Invalid email format")
 
     # Validate password strength
-    pwd_validation = validate_password(request.password)
+    pwd_validation = validate_password(signup_data.password)
     if not pwd_validation["valid"]:
         raise HTTPException(
             status_code=400,
@@ -139,41 +180,42 @@ def signup(request: SignupRequest, db = Depends(get_db)):
         )
 
     # Check if passwords match
-    if request.password != request.confirm_password:
+    if signup_data.password != signup_data.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
-    # Verify stock market CAPTCHA
-    if not hasattr(app.state, 'captcha_store') or request.captcha_id not in app.state.captcha_store:
-        raise HTTPException(status_code=400, detail="Invalid CAPTCHA session")
+    # Verify server CAPTCHA only when provided (legacy flow).
+    if signup_data.captcha_id and signup_data.captcha_answer:
+        if not hasattr(app.state, 'captcha_store') or signup_data.captcha_id not in app.state.captcha_store:
+            raise HTTPException(status_code=400, detail="Invalid CAPTCHA session")
 
-    captcha_data = app.state.captcha_store[request.captcha_id]
-    if datetime.utcnow() > captcha_data["expires"]:
-        del app.state.captcha_store[request.captcha_id]
-        raise HTTPException(status_code=400, detail="CAPTCHA expired")
+        captcha_data = app.state.captcha_store[signup_data.captcha_id]
+        if datetime.utcnow() > captcha_data["expires"]:
+            del app.state.captcha_store[signup_data.captcha_id]
+            raise HTTPException(status_code=400, detail="CAPTCHA expired")
 
-    if not verify_stock_captcha(request.captcha_answer, captcha_data["answer"]):
-        del app.state.captcha_store[request.captcha_id]
-        raise HTTPException(status_code=400, detail="Incorrect CAPTCHA answer")
+        if not verify_stock_captcha(signup_data.captcha_answer, captcha_data["answer"]):
+            del app.state.captcha_store[signup_data.captcha_id]
+            raise HTTPException(status_code=400, detail="Incorrect CAPTCHA answer")
 
-    # Remove used CAPTCHA
-    del app.state.captcha_store[request.captcha_id]
+        # Remove used CAPTCHA
+        del app.state.captcha_store[signup_data.captcha_id]
 
     # Check if user already exists
     existing_user = db.query(User).filter(
-        (User.email == request.email) | (User.username == request.username)
+        (User.email == signup_data.email) | (User.username == signup_data.username)
     ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email or username already registered")
 
     # Create new user
-    hashed_password = get_password_hash(request.password)
-    totp_secret = generate_totp_secret() if request.enable_2fa else None
+    hashed_password = get_password_hash(signup_data.password)
+    totp_secret = generate_totp_secret() if signup_data.enable_2fa else None
 
     new_user = User(
-        email=request.email,
-        username=request.username,
+        email=signup_data.email,
+        username=signup_data.username,
         hashed_password=hashed_password,
-        full_name=request.full_name
+        full_name=signup_data.full_name
     )
 
     # Add 2FA secret if enabled (store securely in production)

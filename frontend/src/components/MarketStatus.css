@@ -1,11 +1,14 @@
 .market-status-container {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   margin-bottom: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
 .market-status {
-  flex: 1;
+  min-width: 0;
   padding: 16px 20px;
   border-radius: 8px;
   border: 2px solid #e2e8f0;
@@ -70,7 +73,7 @@
 
 @media (max-width: 768px) {
   .market-status-container {
-    flex-direction: column;
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
